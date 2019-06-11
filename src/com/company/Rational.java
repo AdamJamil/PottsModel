@@ -39,7 +39,7 @@ class Rational
 
     Rational add(Rational other)
     {
-        int outP = (p * other.q) + (other.p * q) , outQ = q * other.q;
+        int outP = (p * other.q) + (other.p * q), outQ = q * other.q;
         int gcd = gcd(outP, outQ);
         outP /= gcd;
         outQ /= gcd;

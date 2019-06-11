@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public class Main
 {
-    static int n = 2;
+    static int n = 3;
     static Polynomial zero, one, x;
     static RESum sumZero;
 

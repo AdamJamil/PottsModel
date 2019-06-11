@@ -34,25 +34,35 @@ class Polynomial
 
         boolean allPos = true, allNeg = true;
 
-        if (evaluate((1 + realRoots.get(0)) / 2) > 0.0001)
-            allNeg = false;
-        if (evaluate((1 + realRoots.get(0)) / 2) < -0.0001)
-            allPos = false;
-
-        for (int i = 1; i < realRoots.size() - 1; i++)
+        if (realRoots.size() == 0)
         {
-            if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < 0.001)
-                continue;
-            if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) > 0.0001)
+            if (evaluate(2) > 0.0001)
                 allNeg = false;
-            if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -0.0001)
+            if (evaluate(2) < -0.0001)
                 allPos = false;
         }
+        else
+        {
+            if (evaluate((1 + realRoots.get(0)) / 2) > 0.0001)
+                allNeg = false;
+            if (evaluate((1 + realRoots.get(0)) / 2) < -0.0001)
+                allPos = false;
 
-        if (evaluate(2 * realRoots.get(realRoots.size() - 1)) > 0.0001)
-            allNeg = false;
-        if (evaluate(2 * realRoots.get(realRoots.size() - 1)) < -0.0001)
-            allPos = false;
+            for (int i = 1; i < realRoots.size() - 1; i++)
+            {
+                if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < 0.001)
+                    continue;
+                if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) > 0.0001)
+                    allNeg = false;
+                if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -0.0001)
+                    allPos = false;
+            }
+
+            if (evaluate(2 * realRoots.get(realRoots.size() - 1)) > 0.0001)
+                allNeg = false;
+            if (evaluate(2 * realRoots.get(realRoots.size() - 1)) < -0.0001)
+                allPos = false;
+        }
 
         if (allPos && allNeg)
             return 3;
@@ -253,7 +263,12 @@ class Polynomial
         }
 
         if (coefficients.get(0).p != 0)
-            return sb.toString() + coefficients.get(0).p;
+        {
+            if (coefficients.get(0).q == 1)
+                return sb.toString() + coefficients.get(0).p;
+            else
+                return sb.toString() + "(" + coefficients.get(0).p + "/" + coefficients.get(0).q + ")";
+        }
         else
             return sb.toString().substring(0, sb.toString().length() - 1);
     }

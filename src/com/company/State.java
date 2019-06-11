@@ -18,10 +18,18 @@ class State implements Comparable<State>
         if (this.equals(other))
             return true;
 
-        if (this.order[0] < other.order[0] || this.order[1] > other.order[1] || this.order[2] > other.order[2])
+        if (this.order[0] < other.order[0])
             return false;
 
-        return (this.order[0] - other.order[0]) >= (other.order[2] - this.order[2] + other.order[1] - this.order[1]);
+        return (this.order[0] + this.order[2] >= other.order[0] + other.order[2]);
+
+//        if (this.equals(other))
+//            return true;
+//
+//        if (this.order[0] < other.order[0] || this.order[1] > other.order[1] || this.order[2] > other.order[2])
+//            return false;
+//
+//        return (this.order[0] - other.order[0]) >= (other.order[2] - this.order[2] + other.order[1] - this.order[1]);
     }
 
     @Override

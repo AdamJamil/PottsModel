@@ -92,6 +92,13 @@ class RESum
         for (RationalExpression term : terms)
             out.terms.add(term.multiply(r));
 
+        for (int i = out.terms.size() - 1; i >= 0; i--)
+            if (out.terms.get(i).num.equals(Main.zero))
+                out.terms.remove(i);
+
+        if (out.terms.size() == 0)
+            out.terms.add(new RationalExpression());
+
         return out;
     }
 
@@ -131,11 +138,6 @@ class RESum
 
             f = f.add(temp.multiply(new Rational(-1, 1)));
         }
-
-        System.out.println(this);
-        System.out.println(other);
-        System.out.println(f);
-
         return f.compare();
     }
 
@@ -150,6 +152,13 @@ class RESum
     @Override
     public String toString()
     {
+        for (int i = terms.size() - 1; i >= 0; i--)
+            if (terms.get(i).num.equals(Main.zero))
+                terms.remove(i);
+
+        if (terms.size() == 0)
+            terms.add(new RationalExpression());
+
         return terms.toString();
     }
 }

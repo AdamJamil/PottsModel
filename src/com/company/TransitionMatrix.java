@@ -18,7 +18,7 @@ class TransitionMatrix
             for (State s2 : states)
                 if (s1.g(s2))
                 {
-                    System.out.println("s1 = " + s1 + ", s2 = " + s2);
+                    //System.out.println("s1 = " + s1 + ", s2 = " + s2);
 
                     ArrayList<Arrow> availableArrows = new ArrayList<>();
 
@@ -40,7 +40,7 @@ class TransitionMatrix
                     {
                         if (!a1.valid(s1) || map.get(s1).get(a1.map(s1)).terms.size() == 0)
                             continue;
-                        System.out.print(s1 + "" + a1 + ": ");
+                        //System.out.print(s1 + "" + a1 + ": ");
 
                         PartialSolution.prob1.put(a1, map.get(s1).get(a1.map(s1)));
 
@@ -51,26 +51,20 @@ class TransitionMatrix
 
                         if (allowedArrows.size() < availableArrows.size())
                         {
-                            System.out.print(allowedArrows + "\n");
+                            //System.out.print(allowedArrows + "\n");
                             PartialSolution.allowedArrows1.add(a1);
                             PartialSolution.allowedArrows2.put(a1, allowedArrows);
                             ps.conditionalProb.put(a1, new HashMap<>());
                             for (Arrow allowedArrow : allowedArrows)
                                 ps.conditionalProb.get(a1).put(allowedArrow, new RESum());
                         }
-                        else
-                            System.out.println("unrestricted");
+                        else;
+                            //System.out.println("unrestricted");
                     }
                     System.out.println();
 
                     PartialSolution answer = ps.solve(0);
-
-                    for (Arrow a1 : answer.conditionalProb.keySet())
-                    {
-                        System.out.print(s1 + "" + a1 + ": ");
-                        System.out.println(answer.conditionalProb.get(a1));
-                    }
-                    System.out.println();
+                    answer.print(s1.toString(), s2.toString());
                 }
     }
 
@@ -170,8 +164,6 @@ class TransitionMatrix
             }
         }
 
-        System.out.println(map);
-
         for (State s1 : map.keySet())
             for (State s2 : map.get(s1).keySet())
                 for (RationalExpression rationalExpression : map.get(s1).get(s2).terms)
@@ -180,44 +172,46 @@ class TransitionMatrix
 
         //printBS(states);
 
-//        String s = " ";
-//        for (State state : states)
-//            s += " & " + state.toString().replace("†", "\\dagger");
+        String s = " ";
+        for (State state : states)
+            s += " & " + state.toString().replace("†", "\\dagger");
+
+        for (State s1 : states)
+        {
+            s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
+            for (State s2 : states)
+            {
+                String temp = "";
+                for (RationalExpression rE : map.get(s1).get(s2).terms)
+                {
+                    if (rE.num.equals(Main.zero))
+                        continue;
+                    temp += "\\frac{";
+                    if (rE.coeff.p != 1)
+                        temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
+                    else
+                        temp += rE.num.LaTeX() + "}{";
+
+                    if (rE.coeff.q != 1)
+                        temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
+                    else
+                        temp += rE.denom.LaTeX() + "}";
+//                    if (!rE.coeff.toString().equals(""))
+//                        if (rE.coeff.q == 1)
+//                            temp += rE.coeff.p + " \\cdot ";
+//                        else
+//                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
 //
-//        for (State s1 : states)
-//        {
-//            s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
-//            for (State s2 : states)
-//            {
-//                String temp = "";
-//                for (RationalExpression rE : map.get(s1).get(s2).terms)
-//                {
-//                    temp += "\\frac{";
-//                    if (rE.coeff.p != 1)
-//                        temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
-//                    else
-//                        temp += rE.num.LaTeX() + "}{";
-//
-//                    if (rE.coeff.q != 1)
-//                        temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
-//                    else
-//                        temp += rE.denom.LaTeX() + "}";
-////                    if (!rE.coeff.toString().equals(""))
-////                        if (rE.coeff.q == 1)
-////                            temp += rE.coeff.p + " \\cdot ";
-////                        else
-////                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
-////
-////                    if (rE.denom.degree != 0)
-////                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
-//                    temp += " + ";
-//                }
-//                if (temp.equals(""))
-//                    temp = "0000";
-//                s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
-//            }
-//        }
-//
-//        System.out.println(s);
+//                    if (rE.denom.degree != 0)
+//                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
+                    temp += " + ";
+                }
+                if (temp.equals(""))
+                    temp = "0000";
+                s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
+            }
+        }
+
+        System.out.println(s);
     }
 }

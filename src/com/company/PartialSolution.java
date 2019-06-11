@@ -14,13 +14,6 @@ class PartialSolution
 
     PartialSolution solve(int index)
     {
-        for (Arrow a1 : conditionalProb.keySet())
-        {
-            System.out.print("" + a1 + ": ");
-            System.out.println(conditionalProb.get(a1));
-        }
-        System.out.println();
-
         if (index == allowedArrows1.size())
             return this;
 
@@ -60,9 +53,6 @@ class PartialSolution
                     case 0: //greater than
                     {
                         //replace residualProb2 with resid - temp
-                        System.out.println("case 0 ");
-                        System.out.println(residualProb2.get(a2));
-                        System.out.println(temp);
                         newBranch.residualProb2.put(a2, residualProb2.get(a2).add(temp.multiply(new Rational(-1, 1))));
                         //update conditional prob
                         newBranch.conditionalProb.get(a1).put(a2, temp);
@@ -78,11 +68,8 @@ class PartialSolution
                     break;
                     case 2: //neither
                     {
-                        System.out.println(residualProb2.get(a2));
-                        System.out.println(temp);
-                        System.out.println("oh god oh fucj");
+                        continue;
                     }
-                    break;
                     case 3: //equal
                     {
                         //set residualProb2 to 0
@@ -100,5 +87,17 @@ class PartialSolution
         }
 
         return null;
+    }
+
+    void print(String s1, String s2)
+    {
+        System.out.println("s1 = " + s1 + ", s2 = " + s2);
+        for (Arrow a1 : allowedArrows1)
+        {
+            System.out.println("if " + s1 + "" + a1 + ",");
+            for (Arrow a2 : allowedArrows2.get(a1))
+                if (!conditionalProb.get(a1).get(a2).equals(Main.sumZero))
+                    System.out.println("\t" + s2 + "" + a2 + " wp " + conditionalProb.get(a1).get(a2));
+        }
     }
 }
