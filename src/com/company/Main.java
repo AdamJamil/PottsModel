@@ -2,11 +2,13 @@ package com.company;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main
 {
     static int n = 2;
     static Polynomial zero, one, x;
+    static RESum sumZero;
 
     Main() throws Exception
     {

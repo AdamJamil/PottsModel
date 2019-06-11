@@ -16,6 +16,17 @@ class Complex
         return new Complex(r * other.r, (theta + other.theta) % (2 * Math.PI));
     }
 
+    Complex subtract(Complex other)
+    {
+        double x1 = r * Math.cos(theta), x2 = other.r * Math.cos(other.theta);
+        double y1 = r * Math.sin(theta), y2 = other.r * Math.sin(other.theta);
+        double angle = Math.atan2(y1 - y2, x1 - x2);
+        if (angle < 0)
+            angle += 2 * Math.PI;
+
+        return new Complex(Math.sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2))), angle);
+    }
+
     Complex add(Complex other)
     {
         double x1 = r * Math.cos(theta), x2 = other.r * Math.cos(other.theta);

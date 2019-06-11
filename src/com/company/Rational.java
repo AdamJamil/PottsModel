@@ -17,6 +17,11 @@ class Rational
         q = b;
     }
 
+    double value()
+    {
+        return p / (double) q;
+    }
+
     BigDecimal preciseValue()
     {
         return new BigDecimal(p).divide(new BigDecimal(q), 50, RoundingMode.CEILING);
@@ -62,18 +67,32 @@ class Rational
         return p == ((Rational) obj).p && q == ((Rational) obj).q;
     }
 
+    static int depth = 0, c, d;
+
     static int gcd(int a, int b)
     {
-        if (a == 0)
-            return b;
-        if (b == 0)
-            return a;
+        depth = 0;
+        c = a;
+        d = b;
+        return help(Math.abs(a), Math.abs(b));
+    }
 
-        if (a == b)
-            return a;
+    static int help(int a, int b)
+    {
+        while (true)
+        {
+            if (a == 0)
+                return b;
+            if (b == 0)
+                return a;
 
-        if (a > b)
-            return gcd(a-b, b);
-        return gcd(a, b-a);
+            if (a == b)
+                return a;
+
+            if (a > b)
+                a = a - b;
+            else
+                b = b - a;
+        }
     }
 }

@@ -1,13 +1,10 @@
 package com.company;
 
 import javafx.util.Pair;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import static com.company.Main.one;
-import static com.company.Main.zero;
 
 class TransitionMatrix
 {
@@ -26,12 +23,17 @@ class TransitionMatrix
                     ArrayList<Arrow> availableArrows = new ArrayList<>();
 
                     PartialSolution ps = new PartialSolution();
+                    PartialSolution.allowedArrows1 = new ArrayList<>();
+                    PartialSolution.allowedArrows2 = new HashMap<>();
+                    PartialSolution.prob1 = new HashMap<>();
+                    PartialSolution.prob2 = new HashMap<>();
 
                     for (Arrow a : arrows)
                         if (a.valid(s2))
                         {
                             availableArrows.add(a);
-                            ps.prob2.put(a, map.get(s2).get(a.map(s2)));
+                            PartialSolution.prob2.put(a, map.get(s2).get(a.map(s2)));
+                            ps.residualProb2.put(a, map.get(s2).get(a.map(s2)));
                         }
 
                     for (Arrow a1 : arrows)
@@ -40,7 +42,7 @@ class TransitionMatrix
                             continue;
                         System.out.print(s1 + "" + a1 + ": ");
 
-                        ps.prob1.put(a1, map.get(s1).get(a1.map(s1)));
+                        PartialSolution.prob1.put(a1, map.get(s1).get(a1.map(s1)));
 
                         ArrayList<Arrow> allowedArrows = new ArrayList<>();
                         for (Arrow a2 : availableArrows)
@@ -50,8 +52,8 @@ class TransitionMatrix
                         if (allowedArrows.size() < availableArrows.size())
                         {
                             System.out.print(allowedArrows + "\n");
-                            ps.allowedArrows1.add(a1);
-                            ps.allowedArrows2.put(a1, allowedArrows);
+                            PartialSolution.allowedArrows1.add(a1);
+                            PartialSolution.allowedArrows2.put(a1, allowedArrows);
                             ps.conditionalProb.put(a1, new HashMap<>());
                             for (Arrow allowedArrow : allowedArrows)
                                 ps.conditionalProb.get(a1).put(allowedArrow, new RESum());
@@ -61,7 +63,14 @@ class TransitionMatrix
                     }
                     System.out.println();
 
-                    ps.solve(0);
+                    PartialSolution answer = ps.solve(0);
+
+                    for (Arrow a1 : answer.conditionalProb.keySet())
+                    {
+                        System.out.print(s1 + "" + a1 + ": ");
+                        System.out.println(answer.conditionalProb.get(a1));
+                    }
+                    System.out.println();
                 }
     }
 
@@ -94,14 +103,16 @@ class TransitionMatrix
 
         map = new HashMap<>();
 
-        zero = new Polynomial();
-        zero.coefficients.add(new Rational(0, 1));
-        one = new Polynomial();
-        one.coefficients.add(new Rational(1, 1));
+        Main.zero = new Polynomial();
+        Main.zero.coefficients.add(new Rational(0, 1));
+        Main.one = new Polynomial();
+        Main.one.coefficients.add(new Rational(1, 1));
         Main.x = new Polynomial();
         Main.x.degree = 1;
         Main.x.coefficients.add(new Rational(0, 1));
         Main.x.coefficients.add(new Rational(1, 1));
+        Main.sumZero = new RESum();
+        Main.sumZero.add(new RationalExpression(Main.zero));
 
         for (State s1 : states)
         {
@@ -118,7 +129,8 @@ class TransitionMatrix
                 if (startOrder[source] == 0)
                     continue;
                 Rational pPickSource = new Rational(startOrder[source], Main.n);
-                HashMap<RationalExpression, Pair<Integer, Integer>> map2 = new HashMap<>();
+                HashMap<RationalExpression, Integer> map2 = new HashMap<>();
+                HashMap<RationalExpression, Integer> map3 = new HashMap<>();
 
                 for (int dest = 0; dest < 3; dest++)
                 {
@@ -137,30 +149,34 @@ class TransitionMatrix
                     for (; state2 < states.size(); state2++)
                         if (states.get(state2).equals(endState))
                         {
-                            Polynomial prob = one.multiply(pPickSource);
+                            Polynomial prob = Main.one.multiply(pPickSource);
                             for (int i = 0; i < startOrder[dest] - ((source == dest) ? 1 : 0); i++)
                                 prob = prob.multiply(Main.x);
-                            map2.put(new RationalExpression(prob.multiply(one)), new Pair<>(state2, state1));
+                            RationalExpression re = new RationalExpression(prob.multiply(Main.one));
+                            map2.put(re, state1);
+                            map3.put(re, state2);
                             break;
                         }
                 }
 
-                Polynomial denom = zero.multiply(zero);
+                Polynomial denom = Main.zero.multiply(Main.zero);
                 for (RationalExpression rationalExpression : map2.keySet())
                     denom = denom.add(rationalExpression.num);
 
                 denom = denom.multiply(new Rational(pPickSource.q, pPickSource.p));
 
                 for (RationalExpression rE : map2.keySet())
-                    map.get(states.get(map2.get(rE).getValue())).get(states.get(map2.get(rE).getKey())).add(
-                            rE.divide(denom.multiply(one)));
+                    map.get(states.get(map2.get(rE))).put(states.get(map3.get(rE)), map.get(states.get(map2.get(rE))).get(states.get(map3.get(rE))).add(rE.divide(denom.multiply(Main.one))));
             }
         }
+
+        System.out.println(map);
 
         for (State s1 : map.keySet())
             for (State s2 : map.get(s1).keySet())
                 for (RationalExpression rationalExpression : map.get(s1).get(s2).terms)
-                    rationalExpression.setCoefficient();
+                    if (!rationalExpression.num.equals(Main.zero))
+                        rationalExpression.setCoefficient();
 
         //printBS(states);
 
@@ -174,7 +190,7 @@ class TransitionMatrix
 //            for (State s2 : states)
 //            {
 //                String temp = "";
-//                for (RationalExpression rE : map.get(s1).get(s2))
+//                for (RationalExpression rE : map.get(s1).get(s2).terms)
 //                {
 //                    temp += "\\frac{";
 //                    if (rE.coeff.p != 1)

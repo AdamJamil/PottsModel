@@ -39,16 +39,58 @@ class RationalExpression
         denom.coefficients.add(new Rational(1, 1));
     }
 
+    RationalExpression add(RationalExpression other)
+    {
+        //assumes that they have the same denom!
+        if (!this.denom.equals(other.denom))
+        {
+            System.out.println("Error in addition; RationalExpression.java, add()");
+            return null;
+        }
+
+        Polynomial num1 = this.num.multiply(this.coeff);
+        Polynomial num2 = other.num.multiply(other.coeff);
+        RationalExpression out = new RationalExpression();
+        out.num = num1.add(num2);
+        out.denom = denom.multiply(Main.one);
+        out.setCoefficient();
+
+        return out;
+    }
+
     RationalExpression divide(Polynomial p)
     {
         RationalExpression rationalExpression = new RationalExpression(num.multiply(Main.one));
         rationalExpression.denom = denom.multiply(p);
+        rationalExpression.coeff = coeff.multiply(new Rational(1, 1));
 
         return rationalExpression;
     }
 
+    RationalExpression multiply(Rational r)
+    {
+        Polynomial newNum = num.multiply(new Rational(r.p * coeff.p, 1));
+        Polynomial newDenom = denom.multiply(new Rational(r.q * coeff.q, 1));
+        RationalExpression out = new RationalExpression();
+        out.num = newNum;
+        out.denom = newDenom;
+        out.setCoefficient();
+
+        return out;
+    }
+
     void setCoefficient()
     {
+        if (num.equals(Main.zero))
+        {
+            coeff = new Rational(0, 1);
+            return;
+        }
+
+        num = num.multiply(new Rational(coeff.p, 1));
+        denom = denom.multiply(new Rational(coeff.q, 1));
+        coeff = new Rational(1, 1);
+
         ArrayList<Integer> numList = new ArrayList<>();
         for (Rational rational : num.coefficients)
             numList.add(rational.q);
@@ -126,11 +168,6 @@ class RationalExpression
         if (pos == list.size())
             return n;
         return gcd(list, Rational.gcd(list.get(pos), n), pos + 1);
-    }
-
-    int compare(RationalExpression other)
-    {
-        return 0;
     }
 
     @Override

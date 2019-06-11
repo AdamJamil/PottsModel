@@ -2,12 +2,80 @@ package com.company;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 
 class Polynomial
 {
     int degree = 0;
     ArrayList<Rational> coefficients = new ArrayList<>();
     ArrayList<Polynomial> factors = new ArrayList<>();
+
+    int compare()
+    {
+        if (degree == 0)
+        {
+            if (coefficients.get(0).value() == 0)
+                return 3;
+            if (coefficients.get(0).value() > 0)
+                return 0;
+            if (coefficients.get(0).value() < 0)
+                return 1;
+        }
+
+        Complex[] roots = this.findRoots();
+
+        ArrayList<Double> realRoots = new ArrayList<>();
+
+        for (Complex root : roots)
+            if ((root.theta < 0.0001 || (2 * Math.PI - root.theta) < 0.0001) && root.r > 1) //if real root > 1
+                realRoots.add(root.r);
+
+        Collections.sort(realRoots);
+
+        boolean allPos = true, allNeg = true;
+
+        if (evaluate((1 + realRoots.get(0)) / 2) > 0.0001)
+            allNeg = false;
+        if (evaluate((1 + realRoots.get(0)) / 2) < -0.0001)
+            allPos = false;
+
+        for (int i = 1; i < realRoots.size() - 1; i++)
+        {
+            if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < 0.001)
+                continue;
+            if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) > 0.0001)
+                allNeg = false;
+            if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -0.0001)
+                allPos = false;
+        }
+
+        if (evaluate(2 * realRoots.get(realRoots.size() - 1)) > 0.0001)
+            allNeg = false;
+        if (evaluate(2 * realRoots.get(realRoots.size() - 1)) < -0.0001)
+            allPos = false;
+
+        if (allPos && allNeg)
+            return 3;
+        if (allPos)
+            return 0;
+        if (allNeg)
+            return 1;
+        return 2;
+    }
+
+    Polynomial derivative()
+    {
+        Polynomial derivative = new Polynomial();
+        if (degree == 0)
+        {
+            derivative.coefficients.add(new Rational());
+            return derivative;
+        }
+        derivative.degree = degree - 1;
+        for (int i = 1; i < coefficients.size(); i++)
+            derivative.coefficients.add(coefficients.get(i).multiply(new Rational(i, 1)));
+        return derivative;
+    }
 
     BigDecimal evaluatePrecise(BigDecimal lambda)
     {
@@ -17,6 +85,20 @@ class Polynomial
         {
             sum = sum.add(pow.multiply(coefficient.preciseValue()));
             pow = pow.multiply(lambda);
+        }
+
+        return sum;
+    }
+
+    Complex evaluate(Complex x)
+    {
+        Complex sum = new Complex(coefficients.get(0).p / (double) coefficients.get(0).q, 0);
+        Complex pow = x.multiply(new Complex(1, 0));
+
+        for (int i = 1; i < coefficients.size(); i++)
+        {
+            sum = sum.add(pow.multiply(new Complex(coefficients.get(i).p / (double) coefficients.get(i).q, 0)));
+            pow = pow.multiply(x);
         }
 
         return sum;
@@ -212,5 +294,41 @@ class Polynomial
         }
 
         return out.reverse().toString();
+    }
+
+    Complex[] findRoots()
+    {
+            if (degree == 0)
+                return new Complex[0];
+
+            Complex[] roots = new Complex[degree];
+
+            Complex mult = new Complex(0.984886, 1.152571805);
+            roots[0] = new Complex(1, 0);
+
+            for (int i = 1; i < degree; i++)
+                roots[i] = roots[i - 1].multiply(mult);
+
+            for (int n = 0; n < 50; n++)
+            {
+                Complex[] next = new Complex[degree];
+
+                for (int i = 0; i < degree; i++)
+                {
+                    Complex temp = this.evaluate(roots[i]);
+                    for (int j = 0; j < degree; j++)
+                    {
+                        if (i == j)
+                            continue;
+                        Complex divisor = roots[i].subtract(roots[j]);
+                        temp = temp.multiply(divisor.inverse());
+                    }
+                    next[i] = roots[i].subtract(temp);
+                }
+
+                System.arraycopy(next, 0, roots, 0, degree);
+            }
+
+        return roots;
     }
 }
