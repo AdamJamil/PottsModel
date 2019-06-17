@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 class PartialSolution
 {
+    static String s1, s2;
     static ArrayList<Arrow> allowedArrows1;
     static HashMap<Arrow, ArrayList<Arrow>> allowedArrows2;
     static HashMap<Arrow, RESum> prob1;
@@ -14,6 +15,8 @@ class PartialSolution
 
     PartialSolution solve(int index)
     {
+        //print();
+
         if (index == allowedArrows1.size())
             return this;
 
@@ -29,8 +32,11 @@ class PartialSolution
 
         //current a1 is not done, so we need to add some a2 with some probability
         //iterate over all a2
+        //System.out.println(prob1.get(a1));
         for (Arrow a2 : allowedArrows2.get(a1))
         {
+//            System.out.println(a2 + " hhh");
+//            System.out.println(prob2.get(a2));
             if (!residualProb2.get(a2).equals(Main.sumZero))
             {
                 //create new backtracking branch
@@ -68,6 +74,7 @@ class PartialSolution
                     break;
                     case 2: //neither
                     {
+                        System.out.println("case 2");
                         continue;
                     }
                     case 3: //equal
@@ -89,12 +96,12 @@ class PartialSolution
         return null;
     }
 
-    void print(String s1, String s2)
+    void print()
     {
         System.out.println("s1 = " + s1 + ", s2 = " + s2);
         for (Arrow a1 : allowedArrows1)
         {
-            System.out.println("if " + s1 + "" + a1 + ",");
+            System.out.println("if " + s1 + "" + a1 + "," + prob1.get(a1));
             for (Arrow a2 : allowedArrows2.get(a1))
                 if (!conditionalProb.get(a1).get(a2).equals(Main.sumZero))
                     System.out.println("\t" + s2 + "" + a2 + " wp " + conditionalProb.get(a1).get(a2));

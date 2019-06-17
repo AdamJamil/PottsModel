@@ -173,6 +173,7 @@ class RationalExpression
     @Override
     public String toString()
     {
+        setCoefficient();
         return "(" + coeff + ")[" + num + "]/[" + denom + "]";
     }
 }

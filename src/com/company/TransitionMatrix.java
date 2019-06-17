@@ -1,6 +1,5 @@
 package com.company;
 
-import javafx.util.Pair;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +18,8 @@ class TransitionMatrix
                 if (s1.g(s2))
                 {
                     //System.out.println("s1 = " + s1 + ", s2 = " + s2);
+                    PartialSolution.s1 = s1.toString();
+                    PartialSolution.s2 = s2.toString();
 
                     ArrayList<Arrow> availableArrows = new ArrayList<>();
 
@@ -64,7 +65,7 @@ class TransitionMatrix
                     System.out.println();
 
                     PartialSolution answer = ps.solve(0);
-                    answer.print(s1.toString(), s2.toString());
+                    answer.print();
                 }
     }
 
@@ -107,6 +108,8 @@ class TransitionMatrix
         Main.x.coefficients.add(new Rational(1, 1));
         Main.sumZero = new RESum();
         Main.sumZero.add(new RationalExpression(Main.zero));
+        Main.sumOne = new RESum();
+        Main.sumZero.add(new RationalExpression(Main.one));
 
         for (State s1 : states)
         {
@@ -172,46 +175,49 @@ class TransitionMatrix
 
         //printBS(states);
 
-        String s = " ";
-        for (State state : states)
-            s += " & " + state.toString().replace("†", "\\dagger");
-
-        for (State s1 : states)
+        if (Main.printTM)
         {
-            s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
-            for (State s2 : states)
+            String s = " ";
+            for (State state : states)
+                s += " & " + state.toString().replace("†", "\\dagger");
+
+            for (State s1 : states)
             {
-                String temp = "";
-                for (RationalExpression rE : map.get(s1).get(s2).terms)
+                s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
+                for (State s2 : states)
                 {
-                    if (rE.num.equals(Main.zero))
-                        continue;
-                    temp += "\\frac{";
-                    if (rE.coeff.p != 1)
-                        temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
-                    else
-                        temp += rE.num.LaTeX() + "}{";
+                    String temp = "";
+                    for (RationalExpression rE : map.get(s1).get(s2).terms)
+                    {
+                        if (rE.num.equals(Main.zero))
+                            continue;
+                        temp += "\\frac{";
+                        if (rE.coeff.p != 1)
+                            temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
+                        else
+                            temp += rE.num.LaTeX() + "}{";
 
-                    if (rE.coeff.q != 1)
-                        temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
-                    else
-                        temp += rE.denom.LaTeX() + "}";
-//                    if (!rE.coeff.toString().equals(""))
-//                        if (rE.coeff.q == 1)
-//                            temp += rE.coeff.p + " \\cdot ";
-//                        else
-//                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
-//
-//                    if (rE.denom.degree != 0)
-//                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
-                    temp += " + ";
+                        if (rE.coeff.q != 1)
+                            temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
+                        else
+                            temp += rE.denom.LaTeX() + "}";
+                        //                    if (!rE.coeff.toString().equals(""))
+                        //                        if (rE.coeff.q == 1)
+                        //                            temp += rE.coeff.p + " \\cdot ";
+                        //                        else
+                        //                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
+                        //
+                        //                    if (rE.denom.degree != 0)
+                        //                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
+                        temp += " + ";
+                    }
+                    if (temp.equals(""))
+                        temp = "0000";
+                    s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
                 }
-                if (temp.equals(""))
-                    temp = "0000";
-                s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
             }
-        }
 
-        System.out.println(s);
+            System.out.println(s);
+        }
     }
 }

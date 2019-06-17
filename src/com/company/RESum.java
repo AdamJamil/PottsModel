@@ -143,10 +143,44 @@ class RESum
 
     boolean equals(RESum other)
     {
-        for (double lambda = 1.1; lambda < 100; lambda *= 1.1)
+        int maxDegree = 1000; //TODO: change me!
+        for (double lambda = 1.1; lambda < maxDegree; lambda *= 1.1)
             if (evaluate(lambda) != other.evaluate(lambda))
                 return false;
         return true;
+    }
+
+    String LaTeX()
+    {
+        String temp = "";
+        for (RationalExpression rE : terms)
+        {
+            if (rE.num.equals(Main.zero))
+                continue;
+            temp += "\\frac{";
+            if (rE.coeff.p != 1)
+                temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
+            else
+                temp += rE.num.LaTeX() + "}{";
+
+            if (rE.coeff.q != 1)
+                temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
+            else
+                temp += rE.denom.LaTeX() + "}";
+            //                    if (!rE.coeff.toString().equals(""))
+            //                        if (rE.coeff.q == 1)
+            //                            temp += rE.coeff.p + " \\cdot ";
+            //                        else
+            //                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
+            //
+            //                    if (rE.denom.degree != 0)
+            //                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
+            temp += " + ";
+        }
+        if (temp.equals(""))
+            temp = "0000";
+
+        return temp.substring(0, Math.max(0, temp.length() - 3));
     }
 
     @Override

@@ -1,12 +1,14 @@
 package com.company;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 class State implements Comparable<State>
 {
     String name = "";
     int[] order = new int[3];
+    static HashMap<State, ArrayList<State>> blacklist = new HashMap<>();
 
     boolean g(State other)
     {
@@ -15,6 +17,9 @@ class State implements Comparable<State>
 
     boolean geq(State other)
     {
+        if (blacklist.get(this).contains(other))
+            return false;
+
         if (this.equals(other))
             return true;
 
@@ -45,15 +50,6 @@ class State implements Comparable<State>
     State(int[] arr)
     {
         System.arraycopy(arr, 0, order, 0, arr.length);
-
-        for (int i = 0; i < order[0]; i++)
-            name += "B";
-
-        for (int i = 0; i < order[1]; i++)
-            name += "*";
-
-        for (int i = 0; i < order[2]; i++)
-            name += "†";
     }
 
     @Override
@@ -65,18 +61,29 @@ class State implements Comparable<State>
     @Override
     public boolean equals(Object obj)
     {
-        return name.equals(((State) obj).name);
+        return (this.order[0] == ((State) obj).order[0]) && (this.order[1] == ((State) obj).order[1]) && (this.order[2] == ((State) obj).order[2]);
     }
 
     @Override
     public String toString()
     {
+        if (name.isEmpty())
+        {
+            for (int i = 0; i < order[0]; i++)
+                name += "B";
+
+            for (int i = 0; i < order[1]; i++)
+                name += "*";
+
+            for (int i = 0; i < order[2]; i++)
+                name += "†";
+        }
         return name;
     }
 
     static ArrayList<State> generateStates()
     {
-        ArrayList<int[]> partitions = Main.partitions();
+        ArrayList<int[]> partitions = Driver.partitions();
         HashSet<State> temp = new HashSet<>();
 
         for (int[] partition : partitions)
