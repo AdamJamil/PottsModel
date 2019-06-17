@@ -4,12 +4,16 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 
 class TransitionMatrix
 {
     HashMap<State, HashMap<State, RESum>> map;
     ArrayList<State> states;
     static ArrayList<Arrow> arrows = new ArrayList<>();
+    ArrayList<State> bs1 = new ArrayList<>(), bs2 = new ArrayList<>();
+    ArrayList<HashSet<State>> bu = new ArrayList<>();
+    ArrayList<HashSet<State>> upsets;
 
     void findCoupling()
     {

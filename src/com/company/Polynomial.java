@@ -116,12 +116,12 @@ class Polynomial
 
     double evaluate(double lambda)
     {
-        double sum = 0;
+        double result = coefficients.get(0).value();
 
-        for (int i = 0; i < coefficients.size(); i++)
-            sum += Math.pow(lambda, i) * coefficients.get(i).p / (double) coefficients.get(i).q;
+        for (int i = 1; i < coefficients.size(); i++)
+            result = (result * lambda) + coefficients.get(i).value();
 
-        return sum;
+        return result;
     }
 
     Polynomial add(Polynomial other)
@@ -324,7 +324,7 @@ class Polynomial
             for (int i = 1; i < degree; i++)
                 roots[i] = roots[i - 1].multiply(mult);
 
-            for (int n = 0; n < 50; n++)
+            for (int n = 0; n < 30; n++)
             {
                 Complex[] next = new Complex[degree];
 

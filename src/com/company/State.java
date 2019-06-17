@@ -6,6 +6,8 @@ import java.util.HashSet;
 
 class State implements Comparable<State>
 {
+    boolean seen = false;
+    HashSet<State> minUpset = new HashSet<>();
     String name = "";
     int[] order = new int[3];
     static HashMap<State, ArrayList<State>> blacklist = new HashMap<>();
@@ -17,8 +19,8 @@ class State implements Comparable<State>
 
     boolean geq(State other)
     {
-        if (blacklist.get(this).contains(other))
-            return false;
+//        if (blacklist.get(this).contains(other))
+//            return false;
 
         if (this.equals(other))
             return true;

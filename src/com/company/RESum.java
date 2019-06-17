@@ -104,6 +104,25 @@ class RESum
 
     int compare(RESum other)
     {
+//        boolean allG = true, allL = true;
+//
+//        for (double lambda = 1.01; lambda < 10; lambda *= 1.01)
+//        {
+//            double e1 = evaluate(lambda), e2 = other.evaluate(lambda);
+//            if (e1 > e2 + 0.001)
+//                allL = false;
+//            if (e1 < e2 - 0.001)
+//                allG = false;
+//        }
+//
+//        if (allG && allL)
+//            return 3;
+//        if (allG)
+//            return 0;
+//        if (allL)
+//            return 1;
+//        return 2;
+
         //construct a polynomial to compare to zero
 
         //find all denoms
@@ -138,14 +157,25 @@ class RESum
 
             f = f.add(temp.multiply(new Rational(-1, 1)));
         }
+
         return f.compare();
     }
 
-    boolean equals(RESum other)
+    @Override
+    public int hashCode()
+    {
+        int sum = 0;
+        for (RationalExpression term : terms)
+            sum += term.num.hashCode();
+        return sum;
+    }
+
+    @Override
+    public boolean equals(Object other)
     {
         int maxDegree = 1000; //TODO: change me!
         for (double lambda = 1.1; lambda < maxDegree; lambda *= 1.1)
-            if (evaluate(lambda) != other.evaluate(lambda))
+            if (evaluate(lambda) != ((RESum) other).evaluate(lambda))
                 return false;
         return true;
     }

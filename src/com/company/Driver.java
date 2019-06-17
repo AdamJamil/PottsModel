@@ -24,6 +24,7 @@ class Driver
 
         tm = new TransitionMatrix();
         //tm.findCoupling();
+        initializeMinUpset();
         correctPoset();
     }
 
@@ -32,22 +33,44 @@ class Driver
         for (State state : tm.states)
             State.blacklist.put(state, new ArrayList<>());
 
-        ArrayList<HashSet<State>> upsets = new ArrayList<>();
+        tm.upsets = new ArrayList<>();
 
-        outer: for (int i = 0; i < 1 << tm.states.size(); i++)
+        for (State s1 : tm.states)
         {
-            HashSet<State> temp = new HashSet<>();
-            for (int j = 0; j < tm.states.size(); j++)
-                if ((i & (1 << j)) != 0)
-                    temp.add(tm.states.get(j));
+            s1.seen = true;
+
+            //find all states incomparable to s1
+            HashSet<State> incompStates = new HashSet<>();
 
             for (State s2 : tm.states)
-                for (State s1 : temp)
-                    if (s2.g(s1) && !temp.contains(s2))
+            {
+                if (s2.seen)
+                    continue;
+                if (!s1.geq(s2) && !s2.geq(s1)) //incomp
+                    incompStates.add(s2);
+            }
+
+            incompStates.add(s1);
+
+            //now combine all subsets of incomp, union each one with s1, and up-close all of them
+            ArrayList<HashSet<State>> powerSet = powerSet(incompStates);
+
+            outer: for (HashSet<State> incompSubset : powerSet)
+            {
+                HashSet<State> upset = new HashSet<>();
+
+                for (State s2 : incompSubset)
+                    upset.addAll(s2.minUpset);
+
+                for (HashSet<State> set : tm.upsets)
+                    if (equal(upset, set))
                         continue outer;
 
-            upsets.add(temp);
+                tm.upsets.add(upset);
+            }
         }
+
+        System.out.println(tm.upsets.size());
 
         HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
 
@@ -58,7 +81,7 @@ class Driver
             for (State s2 : tm.states)
                 if (s1.g(s2))
                 {
-                    for (HashSet<State> upset : upsets)
+                    for (HashSet<State> upset : tm.upsets)
                     {
                         RESum p1 = sumZero.multiply(new Rational(1, 1));
                         RESum p2 = sumZero.multiply(new Rational(1, 1));
@@ -77,6 +100,7 @@ class Driver
                             temp = map.get(p1).get(p2);
                         else
                         {
+                            //System.out.println(p1 + "  " + p2);
                             temp = p1.compare(p2);
                             if (!map.containsKey(p1))
                                 map.put(p1, new HashMap<>());
@@ -85,16 +109,60 @@ class Driver
 
                         if (temp == 2 || temp == 1)
                         {
-                            System.out.println("s1 = " + s1 + ", s2 = " + s2);
-                            System.out.println("U = " + upset);
-                            System.out.println(p1.LaTeX());
-                            System.out.println(p2.LaTeX());
-                            System.out.println();
+                            tm.bs1.add(s1);
+                            tm.bs2.add(s2);
+                            tm.bu.add(upset);
+//                            System.out.println("s1 = " + s1 + ", s2 = " + s2);
+//                            System.out.println("U = " + upset);
+//                            System.out.println(p1.LaTeX());
+//                            System.out.println(p2.LaTeX());
+//                            System.out.println();
                         }
                     }
                 }
 
         System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
+    }
+
+    boolean equal(HashSet<State> set1, HashSet<State> set2)
+    {
+        if (set1.size() != set2.size())
+            return false;
+
+        for (State s1 : set1)
+            if (!set2.contains(s1))
+                return false;
+
+        return true;
+    }
+
+    void initializeMinUpset()
+    {
+        for (State s1 : tm.states)
+            for (State s2 : tm.states)
+                if (s1.geq(s2))
+                    s2.minUpset.add(s1);
+    }
+
+    ArrayList<HashSet<State>> powerSet(HashSet<State> set)
+    {
+        ArrayList<HashSet<State>> out = new ArrayList<>();
+        out.add(new HashSet<>());
+
+        for (State s : set)
+        {
+            ArrayList<HashSet<State>> newList = new ArrayList<>();
+            for (HashSet<State> temp : out)
+            {
+                HashSet<State> withS = new HashSet<>(temp), withoutS = new HashSet<>(temp);
+                withS.add(s);
+                newList.add(withS);
+                newList.add(withoutS);
+            }
+            out = newList;
+        }
+
+        return out;
     }
 
     int count = 0;

@@ -72,7 +72,7 @@ class PartialSolution
                         newBranch.conditionalProb.get(a1).put(a2, residualProb2.get(a2));
                     }
                     break;
-                    case 2: //neither
+                    case 2: //incomparable case
                     {
                         System.out.println("case 2");
                         continue;

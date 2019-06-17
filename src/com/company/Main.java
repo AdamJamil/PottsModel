@@ -1,25 +1,46 @@
 package com.company;
 
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import javafx.application.Application;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
-public class Main
+public class Main extends Application
 {
     static Polynomial zero, one, x;
     static RESum sumZero, sumOne;
     static boolean printTM = false;
-    static int n = 6;
+    static boolean tonyMode = true;
+    static int n = 11;
+    Driver d;
 
-    Main()
+    public Main()
     {
-        new Driver();
+        d = new Driver();
     }
 
-    public static void main(String[] args) throws Exception
+    @Override
+    public void start(Stage primaryStage)
     {
-        new Main();
+        primaryStage.setTitle("Potts Model");
+        Group root = new Group();
+        Canvas canvas = new Canvas(GUtil.width, GUtil.height);
+        root.getChildren().add(canvas);
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.setFill(Color.BLACK);
+
+        new GUtil(d.tm, gc, scene);
+    }
+
+    public static void main(String[] args)
+    {
+        launch(args);
     }
 }
