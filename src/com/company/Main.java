@@ -13,8 +13,8 @@ public class Main extends Application
     static Polynomial zero, one, x;
     static RESum sumZero, sumOne;
     static boolean printTM = false;
-    static boolean tonyMode = true;
-    static int n = 11;
+    static boolean tonyMode = false;
+    static int n = 12;
     Driver d;
 
     public Main()

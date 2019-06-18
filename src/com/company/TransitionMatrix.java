@@ -12,8 +12,10 @@ class TransitionMatrix
     ArrayList<State> states;
     static ArrayList<Arrow> arrows = new ArrayList<>();
     ArrayList<State> bs1 = new ArrayList<>(), bs2 = new ArrayList<>();
+    ArrayList<RESum> p1 = new ArrayList<>(), p2 = new ArrayList<>();
     ArrayList<HashSet<State>> bu = new ArrayList<>();
     ArrayList<HashSet<State>> upsets;
+    HashMap<HashSet<State>, HashSet<State>> generators = new HashMap<>();
 
     void findCoupling()
     {

@@ -174,6 +174,6 @@ class RationalExpression
     public String toString()
     {
         setCoefficient();
-        return "(" + coeff + ")[" + num + "]/[" + denom + "]";
+        return "" + coeff + "[" + num + "]/[" + denom + "]";
     }
 }

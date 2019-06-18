@@ -62,11 +62,25 @@ class Driver
                 for (State s2 : incompSubset)
                     upset.addAll(s2.minUpset);
 
-                for (HashSet<State> set : tm.upsets)
+                for (int i = 0; i < tm.upsets.size(); i++)
+                {
+                    HashSet<State> set = tm.upsets.get(i);
+
                     if (equal(upset, set))
+                    {
+                        if (incompSubset.size() < tm.generators.get(upset).size())
+                        {
+                            tm.upsets.remove(i);
+                            tm.upsets.add(upset);
+                            tm.generators.remove(set);
+                            tm.generators.put(upset, incompSubset);
+                        }
                         continue outer;
+                    }
+                }
 
                 tm.upsets.add(upset);
+                tm.generators.put(upset, incompSubset);
             }
         }
 
@@ -112,6 +126,8 @@ class Driver
                             tm.bs1.add(s1);
                             tm.bs2.add(s2);
                             tm.bu.add(upset);
+                            tm.p1.add(p1);
+                            tm.p2.add(p2);
 //                            System.out.println("s1 = " + s1 + ", s2 = " + s2);
 //                            System.out.println("U = " + upset);
 //                            System.out.println(p1.LaTeX());
@@ -169,13 +185,12 @@ class Driver
 
     void evaluateAndPrint()
     {
-        outer: for (n = 8; n < 30; n++)
+        outer: for (n = 6; n < 7; n++)
         {
             System.out.println(n);
-            BigDecimal lambda = new BigDecimal(100);
-            for (int p = 0; p < 1; p++)
+            BigDecimal lambda = new BigDecimal(1.1);
+            for (int p = 0; p < 100; p++)
             {
-                TransitionMatrix tm = new TransitionMatrix();
                 BigDecimal[][] arr = tm.evaluatePrecise(lambda), temp = new BigDecimal[arr.length][arr.length];
 
                 for (int i = 0; i < arr.length; i++)

@@ -223,6 +223,11 @@ class RESum
         if (terms.size() == 0)
             terms.add(new RationalExpression());
 
-        return terms.toString();
+        String temp = terms.get(0).toString();
+
+        for (int i = 1; i < terms.size(); i++)
+            temp += " + " + terms.get(i);
+
+        return temp;
     }
 }
