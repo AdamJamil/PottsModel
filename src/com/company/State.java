@@ -19,8 +19,24 @@ class State implements Comparable<State>
 
     boolean geq(State other)
     {
+//        if (this.equals(other))
+//            return true;
+//
+//        if (this.order[0] > other.order[0] && this.order[2] == other.order[2])
+//            return true;
+//
+//        return this.order[0] == other.order[0] && this.order[2] > other.order[2];
+
 //        if (blacklist.get(this).contains(other))
 //            return false;
+
+//        if (this.equals(other))
+//            return true;
+//
+//        if (this.order[0] != other.order[0])
+//            return false;
+//
+//        return this.order[2] >= other.order[2];
 
         if (this.equals(other))
             return true;

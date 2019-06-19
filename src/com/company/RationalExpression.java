@@ -79,6 +79,16 @@ class RationalExpression
         return out;
     }
 
+    RationalExpression multiply(RationalExpression r)
+    {
+        RationalExpression out = this.multiply(new Rational(1, 1));
+        out.num = out.num.multiply(r.num).multiply(new Rational(r.coeff.p, 1));
+        out.denom = out.denom.multiply(r.denom).multiply(new Rational(r.coeff.q, 1));
+        out.setCoefficient();
+
+        return out;
+    }
+
     void setCoefficient()
     {
         if (num.equals(Main.zero))

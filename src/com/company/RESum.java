@@ -31,6 +31,17 @@ class RESum
         return out;
     }
 
+    RESum multiply(RESum other)
+    {
+        RESum out = new RESum();
+
+        for (RationalExpression t1 : terms)
+            for (RationalExpression t2 : other.terms)
+                out.terms.add(t1.multiply(t2));
+
+        return fix(out);
+    }
+
     RESum add(RationalExpression newTerm)
     {
         RESum out = new RESum();
@@ -47,30 +58,7 @@ class RESum
 
         out.terms.add(newTerm.multiply(new Rational(1, 1)));
 
-        for (int i = out.terms.size() - 1; i >= 0; i--)
-            if (out.terms.get(i).num.equals(Main.zero))
-                out.terms.remove(i);
-
-        boolean edited;
-        do
-        {
-            edited = false;
-            outer: for (int i = 0; i < out.terms.size(); i++)
-                for (int j = i + 1; j < out.terms.size(); j++)
-                    if (out.terms.get(i).denom.equals(out.terms.get(j).denom))
-                    {
-                        edited = true;
-                        //out.terms.get(i).num = out.terms.get(i).num.add(out.terms.get(j).num);
-                        out.terms.set(i, out.terms.get(i).add(out.terms.get(j)));
-                        out.terms.remove(j); //not suspicious!
-                        break outer;
-                    }
-        } while (edited);
-
-        for (RationalExpression term : out.terms)
-            term.setCoefficient();
-
-        return out;
+        return fix(out);
     }
 
     RESum add(RESum newTerms)
@@ -98,6 +86,34 @@ class RESum
 
         if (out.terms.size() == 0)
             out.terms.add(new RationalExpression());
+
+        return out;
+    }
+
+    RESum fix(RESum out)
+    {
+        for (int i = out.terms.size() - 1; i >= 0; i--)
+            if (out.terms.get(i).num.equals(Main.zero))
+                out.terms.remove(i);
+
+        boolean edited;
+        do
+        {
+            edited = false;
+            outer: for (int i = 0; i < out.terms.size(); i++)
+                for (int j = i + 1; j < out.terms.size(); j++)
+                    if (out.terms.get(i).denom.equals(out.terms.get(j).denom))
+                    {
+                        edited = true;
+                        //out.terms.get(i).num = out.terms.get(i).num.add(out.terms.get(j).num);
+                        out.terms.set(i, out.terms.get(i).add(out.terms.get(j)));
+                        out.terms.remove(j); //not suspicious!
+                        break outer;
+                    }
+        } while (edited);
+
+        for (RationalExpression term : out.terms)
+            term.setCoefficient();
 
         return out;
     }

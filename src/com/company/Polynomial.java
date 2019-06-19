@@ -9,6 +9,7 @@ class Polynomial
     int degree = 0;
     ArrayList<Rational> coefficients = new ArrayList<>();
     ArrayList<Polynomial> factors = new ArrayList<>();
+    private static final double err = 0.000001;
 
     int compare()
     {
@@ -36,31 +37,31 @@ class Polynomial
 
         if (realRoots.size() == 0)
         {
-            if (evaluate(2) > 0.0001)
+            if (evaluate(2) > err)
                 allNeg = false;
-            if (evaluate(2) < -0.0001)
+            if (evaluate(2) < -err)
                 allPos = false;
         }
         else
         {
-            if (evaluate((1 + realRoots.get(0)) / 2) > 0.0001)
+            if (evaluate((1 + realRoots.get(0)) / 2) > err)
                 allNeg = false;
-            if (evaluate((1 + realRoots.get(0)) / 2) < -0.0001)
+            if (evaluate((1 + realRoots.get(0)) / 2) < -err)
                 allPos = false;
 
             for (int i = 1; i < realRoots.size() - 1; i++)
             {
-                if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < 0.001)
+                if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < err)
                     continue;
-                if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) > 0.0001)
+                if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) > err)
                     allNeg = false;
-                if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -0.0001)
+                if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -err)
                     allPos = false;
             }
 
-            if (evaluate(2 * realRoots.get(realRoots.size() - 1)) > 0.0001)
+            if (evaluate(2 * realRoots.get(realRoots.size() - 1)) > err)
                 allNeg = false;
-            if (evaluate(2 * realRoots.get(realRoots.size() - 1)) < -0.0001)
+            if (evaluate(2 * realRoots.get(realRoots.size() - 1)) < -err)
                 allPos = false;
         }
 

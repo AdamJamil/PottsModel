@@ -15,10 +15,12 @@ import static com.company.Main.tonyMode;
 
 class GUtil
 {
+    //it is the current year
+    //hehe xd
     private static int xShift = 0, yShift = 0;
     private static int xOff = 40, yOff = 90;
     private static double dist = 50;
-    static double width = 600, height = yOff + dist * (n + 2);
+    static double width = 800, height = yOff + dist * (n + 2);
     private static int caseIndex = 0, upsetIndex = 0;
     private static double dL = 0.01;
     TransitionMatrix tm;

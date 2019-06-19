@@ -14,7 +14,7 @@ public class Main extends Application
     static RESum sumZero, sumOne;
     static boolean printTM = false;
     static boolean tonyMode = false;
-    static int n = 12;
+    static int n = 6;
     Driver d;
 
     public Main()
@@ -22,6 +22,7 @@ public class Main extends Application
         d = new Driver();
     }
 
+    //new thread that runs graphics, called by itself
     @Override
     public void start(Stage primaryStage)
     {

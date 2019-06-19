@@ -25,10 +25,13 @@ class Driver
         tm = new TransitionMatrix();
         //tm.findCoupling();
         initializeMinUpset();
-        correctPoset();
+        findUpsets();
+        oneStepCoupling();
+//        tm.initializeTwoStep();
+//        twoStepCoupling();
     }
 
-    void correctPoset()
+    void findUpsets()
     {
         for (State state : tm.states)
             State.blacklist.put(state, new ArrayList<>());
@@ -85,7 +88,10 @@ class Driver
         }
 
         System.out.println(tm.upsets.size());
+    }
 
+    void oneStepCoupling()
+    {
         HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
 
         long time = System.nanoTime();
@@ -140,6 +146,56 @@ class Driver
         System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
     }
 
+    void twoStepCoupling()
+    {
+        HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
+
+        long time = System.nanoTime();
+        System.out.println("sakusen kaishi! dainimaku!!!");
+
+        for (int i = 0; i < tm.bs1.size(); i++)
+        {
+            State s1 = tm.bs1.get(i), s2 = tm.bs2.get(i);
+            HashSet<State> upset = tm.bu.get(i);
+
+            RESum p1 = sumZero.multiply(new Rational(1, 1));
+            RESum p2 = sumZero.multiply(new Rational(1, 1));
+
+            for (State target : upset)
+            {
+                p1 = p1.add(tm.map2.get(s1).get(target));
+                p2 = p2.add(tm.map2.get(s2).get(target));
+            }
+
+            int temp;
+
+            if (map.containsKey(p1) && map.get(p1).containsKey(p2))
+                temp = map.get(p1).get(p2);
+            else
+            {
+                //System.out.println(p1 + "  " + p2);
+                temp = p1.compare(p2);
+                if (!map.containsKey(p1))
+                    map.put(p1, new HashMap<>());
+                map.get(p1).put(p2, temp);
+            }
+
+            if (temp == 2 || temp == 1)
+            {
+                System.out.println("yikes!");
+                System.out.println(p1);
+                System.out.println(p2);
+//                bs1.add(s1);
+//                bs2.add(s2);
+//                bu.add(upset);
+//                p1.add(p1);
+//                p2.add(p2);
+            }
+        }
+
+        System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
+    }
+
     boolean equal(HashSet<State> set1, HashSet<State> set2)
     {
         if (set1.size() != set2.size())
@@ -180,8 +236,6 @@ class Driver
 
         return out;
     }
-
-    int count = 0;
 
     void evaluateAndPrint()
     {

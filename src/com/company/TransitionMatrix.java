@@ -8,12 +8,16 @@ import java.util.HashSet;
 
 class TransitionMatrix
 {
-    HashMap<State, HashMap<State, RESum>> map;
+    //map.get(s1).get(s2) -> gives P(s1 -> s2)
+    HashMap<State, HashMap<State, RESum>> map, map2;
     ArrayList<State> states;
     static ArrayList<Arrow> arrows = new ArrayList<>();
+
+    //stores all the information regarding "bad cases" (ie the upset criteria doesn't work)
     ArrayList<State> bs1 = new ArrayList<>(), bs2 = new ArrayList<>();
     ArrayList<RESum> p1 = new ArrayList<>(), p2 = new ArrayList<>();
     ArrayList<HashSet<State>> bu = new ArrayList<>();
+
     ArrayList<HashSet<State>> upsets;
     HashMap<HashSet<State>, HashSet<State>> generators = new HashMap<>();
 
@@ -97,6 +101,33 @@ class TransitionMatrix
         return out;
     }
 
+    void initializeTwoStep()
+    {
+        map2 = new HashMap<>();
+
+        for (State s1 : states)
+        {
+            map2.put(s1, new HashMap<>());
+            for (State s2 : states)
+                map2.get(s1).put(s2, new RESum());
+            for (Arrow a1 : arrows)
+                for (Arrow a2 : arrows)
+                {
+                    if (!a1.valid(s1) || !a2.valid(a1.map(s1)))
+                        continue;
+                    State s2 = a1.map(s1), s3 = a2.map(s2);
+                    map2.get(s1).put(s3, map2.get(s1).get(s3).add(map.get(s1).get(s2).multiply(map.get(s2).get(s3))));
+                }
+        }
+
+        for (State s1 : states)
+        {
+            RESum total = new RESum();
+            for (State s2 : states)
+                total = total.add(map2.get(s1).get(s2));
+        }
+    }
+
     TransitionMatrix()
     {
         states = State.generateStates();
@@ -115,7 +146,7 @@ class TransitionMatrix
         Main.sumZero = new RESum();
         Main.sumZero.add(new RationalExpression(Main.zero));
         Main.sumOne = new RESum();
-        Main.sumZero.add(new RationalExpression(Main.one));
+        Main.sumOne.terms.set(0, new RationalExpression(Main.one));
 
         for (State s1 : states)
         {
