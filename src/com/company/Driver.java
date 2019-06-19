@@ -27,8 +27,40 @@ class Driver
         initializeMinUpset();
         findUpsets();
         oneStepCoupling();
+
 //        tm.initializeTwoStep();
 //        twoStepCoupling();
+        probs_to_all_blue();
+    }
+
+    void probs_to_all_blue()
+    {
+        double[][] mat = tm.evaluate(1.2);
+        for (double[] doubles : mat)
+        {
+            for (double aDouble : doubles)
+            {
+                System.out.print(new DecimalFormat("#.0000000").format(aDouble) + "\t\t\t");
+            }
+            System.out.println();
+        }
+        System.out.println();
+        double[][] base = new double[mat.length][mat[0].length];
+        for (int i = 0; i < mat.length; i++)
+            System.arraycopy(mat, 0, base, 0, mat.length);
+
+        for (int i = 1; i < 10; i++)
+        {
+            System.out.println(i);
+            mat = multiply(base, mat);
+            for (double[] doubles : mat)
+            {
+                for (double aDouble : doubles)
+                    System.out.print(new DecimalFormat("#.0000000").format(aDouble) + "\t\t\t");
+                System.out.println();
+            }
+            System.out.println();
+        }
     }
 
     void findUpsets()

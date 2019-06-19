@@ -117,9 +117,9 @@ class Polynomial
 
     double evaluate(double lambda)
     {
-        double result = coefficients.get(0).value();
+        double result = coefficients.get(coefficients.size() - 1).value();
 
-        for (int i = 1; i < coefficients.size(); i++)
+        for (int i = coefficients.size() - 2; i >= 0; i--)
             result = (result * lambda) + coefficients.get(i).value();
 
         return result;
