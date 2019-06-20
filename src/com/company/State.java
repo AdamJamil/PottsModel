@@ -1,16 +1,13 @@
 package com.company;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 class State implements Comparable<State>
 {
-    boolean seen = false;
     HashSet<State> minUpset;
     String name = "";
     int[] order = new int[3];
-    static HashMap<State, HashSet<State>> blacklist = new HashMap<>();
 
     boolean g(State other)
     {

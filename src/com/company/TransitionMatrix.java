@@ -12,6 +12,7 @@ class TransitionMatrix
 {
     //map.get(s1).get(s2) -> gives P(s1 -> s2)
     HashMap<State, HashMap<State, RESum>> map, map2;
+    RESum[][] arr;
 
     void findCoupling()
     {

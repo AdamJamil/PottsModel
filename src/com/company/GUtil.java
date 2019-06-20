@@ -91,7 +91,7 @@ class GUtil
 
     void drawPartialOrdering(GraphicsContext gc)
     {
-        HashMap<State, HashSet<State>> partialOrder = d.partialOrders.get(partialOrderIndex);
+        boolean[][] partialOrder = d.partialOrders.get(partialOrderIndex);
 
         gc.setStroke(Color.BLACK);
         for (int i = 1; i < n + 1; i++)
@@ -101,34 +101,41 @@ class GUtil
             for (int j = 0; j < rowStates - 1; j++)
             {
                 State s1 = new State(new int[]{n - i + 1, n - (n - i + 1 + j), j});
+                int idx1 = Driver.states.indexOf(s1);
                 State down = Driver.arrows.get(3).map(s1);
                 State right = Driver.arrows.get(1).map(s1);
-                State downright = Driver.arrows.get(2).map(s1);
+                State downRight = Driver.arrows.get(2).map(s1);
+                int idxDown = Driver.states.indexOf(down);
+                int idxRight = Driver.states.indexOf(right);
+                int idxDownRight = Driver.states.indexOf(downRight);
 
-                if (partialOrder.get(s1).contains(down))
+                if (partialOrder[idx1][idxDown])
                     drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * j + xShift, yOff + dist * i + yShift);
 
-                if (partialOrder.get(right).contains(s1))
+                if (partialOrder[idxRight][idx1])
                     drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift);
 
-                if (partialOrder.get(s1).contains(downright))
+                if (partialOrder[idx1][idxDownRight])
                     drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * (j + 1) + xShift, yOff + dist * i + yShift);
             }
 
             State rowEnd = new State(new int[]{n - i + 1, n - (n - i + 1 + (rowStates - 1)), (rowStates - 1)});
-
             State down = Driver.arrows.get(3).map(rowEnd);
-            if (partialOrder.get(rowEnd).contains(down))
+            int idx1 = Driver.states.indexOf(rowEnd);
+            int idxDown = Driver.states.indexOf(down);
+
+            if (partialOrder[idx1][idxDown])
                 drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
                         xOff + dist * (rowStates - 1) + xShift, yOff + dist * i + yShift);
 
             if (i % 2 == 0)
             {
-                State downright = Driver.arrows.get(2).map(rowEnd);
-                if (partialOrder.get(rowEnd).contains(downright))
+                State downRight = Driver.arrows.get(2).map(rowEnd);
+                int idxDownRight = Driver.states.indexOf(downRight);
+                if (partialOrder[idx1][idxDownRight])
                     drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * ((rowStates - 1) + 1) + xShift, yOff + dist * i + yShift);
             }
@@ -139,7 +146,9 @@ class GUtil
         {
             State s1 = new State(new int[]{0, n - j, j});
             State right = Driver.arrows.get(1).map(s1);
-            if (partialOrder.get(right).contains(s1))
+            int idx1 = Driver.states.indexOf(s1);
+            int idxRight = Driver.states.indexOf(right);
+            if (partialOrder[idxRight][idx1])
                 drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * n + yShift,
                         xOff + dist * j + xShift, yOff + dist * n + yShift);
         }
@@ -228,8 +237,9 @@ class GUtil
 
     void drawUpset(GraphicsContext gc)
     {
-        for (State uState : d.upsets.get(upsetIndex))
+        for (int i = 0; i < d.upsets.get(0).length; i++)
         {
+            State uState = Driver.states.get(0);
             int stateI = n - uState.order[0] + 1;
             int stateJ = uState.order[2];
 

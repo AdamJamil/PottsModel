@@ -17,15 +17,17 @@ class Driver
     static ArrayList<Arrow> arrows = new ArrayList<>();
 
     //stores all the information regarding "bad cases" (ie the upset criteria doesn't work)
-    ArrayList<State> bs1 = new ArrayList<>(), bs2 = new ArrayList<>();
-    ArrayList<RESum> p1 = new ArrayList<>(), p2 = new ArrayList<>();
-    ArrayList<HashSet<State>> bu = new ArrayList<>();
+    ArrayList<State> bs1, bs2;
+    ArrayList<RESum> p1, p2;
+    ArrayList<HashSet<State>> bu;
 
-    ArrayList<HashSet<State>> upsets;
+    ArrayList<boolean[]> upsets;
     HashMap<HashSet<State>, HashSet<State>> generators = new HashMap<>();
 
-    HashMap<State, HashSet<State>> partialOrder, temp;
-    ArrayList<HashMap<State, HashSet<State>>> partialOrders = new ArrayList<>();
+    boolean[][] partialOrder, temp;
+    boolean[][] minUpset;
+    boolean[][] blacklist;
+    ArrayList<boolean[][]> partialOrders = new ArrayList<>();
 
     Driver()
     {
@@ -38,8 +40,25 @@ class Driver
         arrows.add(new Arrow(" does (nothing)", new int[]{0, 0, 0}));
 
         tm = new TransitionMatrix();
+        initializeProbArr();
 
         partialOrder = guessAndInitPartialOrder();
+        fixPartialOrder();
+        partialOrders.add(partialOrder);
+        checkTransitivity();
+        printMinPartialOrder(partialOrder);
+
+        for (RESum reSum : map.keySet())
+        {
+            for (RESum sum : map.get(reSum).keySet())
+            {
+                System.out.println(map.get(reSum).get(sum) + ": " + reSum + ",   " + sum);
+            }
+        }
+    }
+
+    void fixPartialOrder()
+    {
         boolean good = false;
 
         while (!good)
@@ -51,76 +70,97 @@ class Driver
 
             good = true;
 
-            for (State s1 : State.blacklist.keySet())
-                if (State.blacklist.get(s1).size() > 0)
-                {
-                    if (!s1.equals(states.get(0)))
-                    {
-                        partialOrder.get(s1).removeAll(State.blacklist.get(s1));
-                        good = false;
-                    }
-                }
+            for (int i = 1; i < blacklist.length; i++)
+            {
+                int idx = -1;
+                for (int j = 0; j < blacklist.length; j++)
+                    if (blacklist[i][j])
+                        partialOrder[i][idx = j] = false;
+                good &= idx == -1;
+            }
 
             if (good)
-                if (State.blacklist.get(states.get(0)).size() > 0)
+            {
+                boolean actuallyGood = true;
+                for (boolean b : blacklist[0])
+                    actuallyGood &= !b;
+
+                if (!actuallyGood)
                     System.out.println("shippaishita :(");
                 else
-                {
                     System.out.println("sakusen kanryo!!!");
-//                    for (State state : partialOrder.keySet())
-//                        System.out.println(state + ": " + partialOrder.get(state));
-//                    System.out.println(partialOrder.get(states.get(0)).size());
-                }
+            }
         }
-
-        partialOrders.add(partialOrder);
-
-        for (State s1 : states)
-            for (State s2 : states)
-                for (State s3 : states)
-                    if (partialOrder.get(s1).contains(s2) && partialOrder.get(s2).contains(s3))
-                        if (!partialOrder.get(s1).contains(s3))
-                            System.out.println(":((((((((((((");
-
-        //printMinPartialOrder(partialOrder);
     }
 
-    //this will completely mess up the partialOrder!
-    void printMinPartialOrder(HashMap<State, HashSet<State>> partialOrder)
+    void initializeProbArr()
     {
-        for (State state : partialOrder.keySet())
+        tm.arr = new RESum[states.size()][states.size()];
+
+        for (int i = 0; i < states.size(); i++)
         {
-            ArrayList<State> set = new ArrayList<>(state.minUpset);
-            set.remove(state);
-            outer:
-            for (int i = set.size() - 1; i >= 0; i--)
-                for (State otherState : set)
+            State s1 = states.get(i);
+
+            for (Arrow arrow : arrows)
+                if (arrow.valid(s1))
+                    tm.arr[i][states.indexOf(arrow.map(s1))] = tm.map.get(states.get(i)).get(arrow.map(s1));
+        }
+    }
+
+    void checkTransitivity()
+    {
+        for (int i = 0; i < states.size(); i++)
+            for (int j = 0; j < states.size(); j++)
+                for (int k = 0; k < states.size(); k++)
+                    if (partialOrder[i][j] && partialOrder[j][k] && !partialOrder[i][k])
+                        System.out.println("not transitive :(");
+    }
+
+    void printMinPartialOrder(boolean[][] partialOrder)
+    {
+        partialOrder = copy(partialOrder);
+        for (int i = 0; i < partialOrder.length; i++)
+        {
+            boolean[] set = minUpset[i];
+            set[i] = false;
+
+            outer: for (int j = 0; j < minUpset.length; j++)
+            {
+                if (!set[j])
+                    continue;
+
+                for (int k = 0; k < minUpset.length; k++)
                 {
-                    if (set.get(i).equals(otherState))
+                    if (j == k)
                         continue;
-                    if (partialOrder.get(set.get(i)).contains(otherState))
+
+                    if (minUpset[k][j])
                     {
-                        set.remove(i);
+                        set[j] = false;
                         continue outer;
                     }
                 }
-            System.out.println(state + ": " + set);
+            }
+
+            System.out.print(states.get(i) + ": ");
+            for (int j = 0; j < minUpset[i].length; j++)
+                if (minUpset[i][j])
+                    System.out.print(states.get(j) + " ");
+            System.out.println();
         }
     }
 
-    HashMap<State, HashSet<State>> copy(HashMap<State, HashSet<State>> map)
+    boolean[][] copy(boolean[][] arr)
     {
-        HashMap<State, HashSet<State>> out = new HashMap<>();
-        for (State state : map.keySet())
-            out.put(state, new HashSet<>(map.get(state)));
+        boolean[][] out = new boolean[arr.length][arr[0].length];
+        for (int i = 0; i < arr.length; i++)
+            System.arraycopy(arr[i], 0, out[i], 0, arr[i].length);
 
         return out;
     }
 
-    HashMap<State, HashSet<State>> guessAndInitPartialOrder()
+    boolean[][] guessAndInitPartialOrder()
     {
-        HashMap<State, HashSet<State>> partialOrder = new HashMap<>();
-
         boolean[][] geq = new boolean[states.size()][states.size()];
 
         for (int i = 0; i < geq.length; i++)
@@ -141,76 +181,91 @@ class Driver
                         geq[i][j] &= arr[i][0] >= arr[j][0];
             }
         }
-
-        for (int i = 0; i < geq.length; i++)
-        {
-            partialOrder.put(states.get(i), new HashSet<>());
-            for (int j = 0; j < geq.length; j++)
-                if (geq[i][j])
-                    partialOrder.get(states.get(i)).add(states.get(j));
-        }
-
-        return partialOrder;
+        return geq;
     }
 
-    void findUpsets(HashMap<State, HashSet<State>> partialOrder)
+    void findUpsets(boolean[][] partialOrder)
     {
         upsets = new ArrayList<>();
         temp = partialOrder;
 
-        generateAntichains(new HashSet<>(), new HashSet<>(states));
+        boolean[] allowed = new boolean[partialOrder.length];
+        for (int i = 0; i < partialOrder.length; i++)
+            allowed[i] = true;
+
+        generateAntichains(new boolean[partialOrder.length], allowed);
 
         System.out.println(upsets.size());
     }
 
-    void generateAntichains(HashSet<State> curr, HashSet<State> allowed)
+    void generateAntichains(boolean[] curr, boolean[] allowed)
     {
-        if (allowed.isEmpty())
+        int idx = -1;
+        for (int i = 0; i < allowed.length; i++)
+            if (allowed[i])
+            {
+                idx = i;
+                break;
+            }
+
+        if (idx == -1)
         {
-            HashSet<State> upset = new HashSet<>();
-            for (State state : curr)
-                upset.addAll(state.minUpset);
+            boolean[] upset = new boolean[partialOrder.length];
+            for (int i = 0; i < curr.length; i++)
+                if (curr[i])
+                    for (int j = 0; j < minUpset.length; j++)
+                        upset[j] |= minUpset[i][j];
+
             upsets.add(upset);
             return;
         }
 
-        State next = allowed.iterator().next();
-        allowed.remove(next);
-        HashSet<State> other = new HashSet<>(curr), otherAllowed = new HashSet<>(allowed);
+        allowed[idx] = false;
+        boolean[] other = new boolean[curr.length], otherAllowed = new boolean[allowed.length];
+        System.arraycopy(curr, 0, other, 0, curr.length);
+        System.arraycopy(allowed, 0, otherAllowed, 0, allowed.length);
         generateAntichains(curr, allowed);
 
-        other.add(next);
-        otherAllowed.removeAll(next.minUpset);
-        otherAllowed.removeAll(temp.get(next));
+        other[idx] = true;
+        for (int i = 0; i < otherAllowed.length; i++)
+            if (minUpset[idx][i] || temp[idx][i])
+                otherAllowed[i] = false;
+
         generateAntichains(other, otherAllowed);
     }
 
     HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
 
-    void oneStepCoupling(HashMap<State, HashSet<State>> partialOrder)
+    void oneStepCoupling(boolean[][] partialOrder)
     {
-        for (State s1 : states)
-            State.blacklist.put(s1, new HashSet<>());
+        bs1 = new ArrayList<>();
+        bs2 = new ArrayList<>();
+        p1 = new ArrayList<>();
+        p2 = new ArrayList<>();
+        bu = new ArrayList<>();
+
+        blacklist = new boolean[partialOrder.length][partialOrder.length];
 
         long time = System.nanoTime();
         System.out.println("sakusen kaishi!");
 
-        for (State s1 : states)
-            for (State s2 : states)
-                if (partialOrder.get(s1).contains(s2) && !s1.equals(s2))
-                {
-                    for (HashSet<State> upset : upsets)
+        for (int i = 0; i < partialOrder.length; i++)
+            outer: for (int j = 0; j < partialOrder.length; j++)
+                if (i != j && partialOrder[i][j])
+                    for (boolean[] upset : upsets)
                     {
-                        RESum p1 = sumZero.multiply(new Rational(1, 1));
-                        RESum p2 = sumZero.multiply(new Rational(1, 1));
+                        RESum p1 = sumZero;
+                        RESum p2 = sumZero;
 
-                        for (Arrow a : arrows)
-                        {
-                            if (upset.contains(a.map(s1)))
-                                p1 = p1.add(tm.map.get(s1).get(a.map(s1)));
-                            if (upset.contains(a.map(s2)))
-                                p2 = p2.add(tm.map.get(s2).get(a.map(s2)));
-                        }
+                        for (int k = 0; k < upset.length; k++)
+                            if (upset[k])
+                            {
+                                if (tm.arr[i][k] != null)
+                                    p1 = p1.add(tm.arr[i][k]);
+
+                                if (tm.arr[j][k] != null)
+                                    p2 = p2.add(tm.arr[j][k]);
+                            }
 
                         int temp;
 
@@ -227,20 +282,10 @@ class Driver
 
                         if (temp == 2 || temp == 1)
                         {
-                            State.blacklist.get(s1).add(s2);
-//                            tm.bs1.add(s1);
-//                            tm.bs2.add(s2);
-//                            tm.bu.add(upset);
-//                            tm.p1.add(p1);
-//                            tm.p2.add(p2);
-//                            System.out.println("s1 = " + s1 + ", s2 = " + s2);
-//                            System.out.println("U = " + upset);
-//                            System.out.println(p1.LaTeX());
-//                            System.out.println(p2.LaTeX());
-//                            System.out.println();
+                            blacklist[i][j] = true;
+                            continue outer;
                         }
                     }
-                }
 
         System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
     }
@@ -307,14 +352,13 @@ class Driver
         return true;
     }
 
-    void initializeMinUpset(HashMap<State, HashSet<State>> partialOrder)
+    void initializeMinUpset(boolean[][] partialOrder)
     {
-        for (State s1 : states)
-            s1.minUpset = new HashSet<>();
-        for (State s1 : states)
-            for (State s2 : states)
-                if (partialOrder.get(s1).contains(s2))
-                    s2.minUpset.add(s1);
+        minUpset = new boolean[partialOrder.length][partialOrder.length];
+
+        for (int i = 0; i < partialOrder.length; i++)
+            for (int j = 0; j < partialOrder.length; j++)
+                    minUpset[j][i] = partialOrder[i][j];
     }
 
     ArrayList<HashSet<State>> powerSet(HashSet<State> set)
