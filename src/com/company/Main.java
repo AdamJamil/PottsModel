@@ -14,8 +14,10 @@ public class Main extends Application
     static RESum sumZero, sumOne;
     static boolean printTM = false;
     static boolean tonyMode = false;
-    static int n = 6;
+    static int n = 8;
     Driver d;
+
+    static boolean drawUpsets = false, drawBadCases = false, drawPartialOrdering = true;
 
     public Main()
     {
@@ -37,7 +39,7 @@ public class Main extends Application
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.BLACK);
 
-        new GUtil(d.tm, gc, scene);
+        new GUtil(d, gc, scene);
     }
 
     public static void main(String[] args)

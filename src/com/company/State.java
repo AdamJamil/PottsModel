@@ -7,10 +7,10 @@ import java.util.HashSet;
 class State implements Comparable<State>
 {
     boolean seen = false;
-    HashSet<State> minUpset = new HashSet<>();
+    HashSet<State> minUpset;
     String name = "";
     int[] order = new int[3];
-    static HashMap<State, ArrayList<State>> blacklist = new HashMap<>();
+    static HashMap<State, HashSet<State>> blacklist = new HashMap<>();
 
     boolean g(State other)
     {

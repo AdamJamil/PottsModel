@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+import static com.company.Main.drawBadCases;
 import static com.company.Main.n;
 import static com.company.Main.tonyMode;
 
@@ -23,11 +24,13 @@ class GUtil
     static double width = 800, height = yOff + dist * (n + 2);
     private static int caseIndex = 0, upsetIndex = 0;
     private static double dL = 0.01;
+    Driver d;
     TransitionMatrix tm;
 
-    GUtil(TransitionMatrix tm, GraphicsContext gc, Scene scene)
+    GUtil(Driver d, GraphicsContext gc, Scene scene)
     {
-        this.tm = tm;
+        this.d = d;
+        tm = d.tm;
         final Timeline timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.setAutoReverse(true);
@@ -37,31 +40,40 @@ class GUtil
             gc.clearRect(0, 0, width, height);
 
             drawDiagram(gc);
-            if (tm.bu.size() > 0)
+
+            if (Main.drawBadCases)
             {
                 drawCase(gc);
                 drawProbs(gc);
+                drawGraph(gc);
             }
-            else
+            else if (Main.drawUpsets)
                 drawUpset(gc);
+            else if (Main.drawPartialOrdering)
+                drawPartialOrdering(gc);
+
         }));
 
         scene.setOnKeyPressed(e ->
         {
             if (e.getCode().equals(KeyCode.SPACE))
             {
-                if (tm.bs1.size() > 0)
+                if (Main.drawBadCases)
                 {
                     caseIndex++;
-                    caseIndex %= tm.bs1.size();
-                    System.out.println(tm.p1.get(caseIndex).LaTeX());
-                    System.out.println(tm.p2.get(caseIndex).LaTeX() + "\n");
+                    caseIndex %= d.bs1.size();
+                    System.out.println(d.p1.get(caseIndex).LaTeX());
+                    System.out.println(d.p2.get(caseIndex).LaTeX() + "\n");
                     //System.out.println((tm.p1.get(caseIndex).add(tm.p2.get(caseIndex).multiply(new Rational(-1, 1)))).LaTeX());
                 }
-                else
+                else if (Main.drawUpsets)
                 {
                     upsetIndex++;
-                    upsetIndex %= tm.upsets.size();
+                    upsetIndex %= d.upsets.size();
+                }
+                else if (Main.drawPartialOrdering)
+                {
+                    //do nothing duh
                 }
             }
             else if (e.getCode().equals(KeyCode.Z))
@@ -73,13 +85,89 @@ class GUtil
         timeline.play();
     }
 
+    void drawPartialOrdering(GraphicsContext gc)
+    {
+        gc.setStroke(Color.BLACK);
+        for (int i = 1; i < n + 1; i++)
+        {
+            int rowStates = (i + 1) / 2;
+
+            for (int j = 0; j < rowStates - 1; j++)
+            {
+                State s1 = new State(new int[]{n - i + 1, n - (n - i + 1 + j), j});
+                State down = Driver.arrows.get(3).map(s1);
+                State right = Driver.arrows.get(1).map(s1);
+                State downright = Driver.arrows.get(2).map(s1);
+
+                if (d.partialOrder.get(s1).contains(down))
+                    drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
+                            xOff + dist * j + xShift, yOff + dist * i + yShift);
+
+                if (d.partialOrder.get(right).contains(s1))
+                    drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * (i - 1) + yShift,
+                            xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift);
+
+                if (d.partialOrder.get(s1).contains(downright))
+                    drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
+                            xOff + dist * (j + 1) + xShift, yOff + dist * i + yShift);
+            }
+
+            State rowEnd = new State(new int[]{n - i + 1, n - (n - i + 1 + (rowStates - 1)), (rowStates - 1)});
+
+            State down = Driver.arrows.get(3).map(rowEnd);
+            if (d.partialOrder.get(rowEnd).contains(down))
+                drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
+                        xOff + dist * (rowStates - 1) + xShift, yOff + dist * i + yShift);
+
+            if (i % 2 == 0)
+            {
+                State downright = Driver.arrows.get(2).map(rowEnd);
+                if (d.partialOrder.get(rowEnd).contains(downright))
+                    drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
+                            xOff + dist * ((rowStates - 1) + 1) + xShift, yOff + dist * i + yShift);
+            }
+        }
+
+        int rowStates = (n + 2) / 2;
+        for (int j = 0; j < rowStates - 1; j++)
+        {
+            State s1 = new State(new int[]{0, n - j, j});
+            State right = Driver.arrows.get(1).map(s1);
+            if (d.partialOrder.get(right).contains(s1))
+                drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * n + yShift,
+                        xOff + dist * j + xShift, yOff + dist * n + yShift);
+        }
+    }
+
+    void drawArrow(GraphicsContext gc, double x1, double y1, double x2, double y2)
+    {
+        x1 += 5;
+        x2 += 5;
+        y1 += 5;
+        y2 += 5;
+
+        gc.strokeLine(x1, y1, x2, y2);
+
+        double cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+
+        double Dx = x2 - x1, Dy = y2 - y1;
+        double dx = 4 * Dx / Math.sqrt(Dx * Dx + Dy * Dy);
+        double dy = 4 * Dy / Math.sqrt(Dx * Dx + Dy * Dy);
+
+        double cos = 0.866, sin = 0.5;
+
+        gc.strokeLine(cx + dx * cos - dy * sin, cy + dx * sin + dy * cos, cx, cy);
+        gc.strokeLine(cx + dx * cos + dy * sin, cy - dx * sin + dy * cos, cx, cy);
+    }
+
     void drawDiagram(GraphicsContext gc)
     {
+        gc.setStroke(Color.BLACK);
+
         for (int i = 1; i <= n + 1; i++)
         {
             int rowStates = (i + 1) / 2;
 
-            gc.setStroke(Color.BLACK);
             for (int j = 0; j < rowStates; j++)
                 if (tonyMode)
                     gc.strokeOval(xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift - (j * dist / 2), 10, 10);
@@ -90,10 +178,10 @@ class GUtil
 
     void drawCase(GraphicsContext gc)
     {
-        gc.strokeText("s₁ = " + tm.bs1.get(caseIndex) + " s₂ = " + tm.bs2.get(caseIndex), 40, 40);
-        gc.strokeText("U generated by: " + tm.generators.get(tm.bu.get(caseIndex)), 40, 70);
+        gc.strokeText("s₁ = " + d.bs1.get(caseIndex) + " s₂ = " + d.bs2.get(caseIndex), 40, 40);
+        gc.strokeText("U generated by: " + d.generators.get(d.bu.get(caseIndex)), 40, 70);
 
-        for (State uState : tm.bu.get(caseIndex))
+        for (State uState : d.bu.get(caseIndex))
         {
             int stateI = n - uState.order[0] + 1;
             int stateJ = uState.order[2];
@@ -105,10 +193,10 @@ class GUtil
                 gc.fillOval(xOff + dist * stateJ + xShift, yOff + dist * (stateI - 1) + yShift, 10, 10);
         }
 
-        int s1I = n - tm.bs1.get(caseIndex).order[0] + 1;
-        int s2I = n - tm.bs2.get(caseIndex).order[0] + 1;
-        int s1J = tm.bs1.get(caseIndex).order[2];
-        int s2J = tm.bs2.get(caseIndex).order[2];
+        int s1I = n - d.bs1.get(caseIndex).order[0] + 1;
+        int s2I = n - d.bs2.get(caseIndex).order[0] + 1;
+        int s1J = d.bs1.get(caseIndex).order[2];
+        int s2J = d.bs2.get(caseIndex).order[2];
 
         double c1x = 5 + xOff + dist * s1J + xShift;
         double c2x = 5 + xOff + dist * s2J + xShift;
@@ -134,7 +222,7 @@ class GUtil
 
     void drawUpset(GraphicsContext gc)
     {
-        for (State uState : tm.upsets.get(upsetIndex))
+        for (State uState : d.upsets.get(upsetIndex))
         {
             int stateI = n - uState.order[0] + 1;
             int stateJ = uState.order[2];
@@ -151,12 +239,15 @@ class GUtil
     {
         gc.strokeText("P(s₁ → U) = ", xOff + 100, yOff + 8);
         gc.setStroke(Color.RED);
-        gc.strokeText(tm.p1.get(caseIndex).toString(), new Text("P(s₁ → U) = ").getLayoutBounds().getWidth() + xOff + 100, yOff + 8);
+        gc.strokeText(d.p1.get(caseIndex).toString(), new Text("P(s₁ → U) = ").getLayoutBounds().getWidth() + xOff + 100, yOff + 8);
         gc.setStroke(Color.BLACK);
         gc.strokeText("P(s₂ → U) = ", xOff + 100, yOff + dist + 8);
         gc.setStroke(Color.BLUE);
-        gc.strokeText(tm.p2.get(caseIndex).toString(), new Text("P(s₂ → U) = ").getLayoutBounds().getWidth() + xOff + 100, yOff + dist + 8);
+        gc.strokeText(d.p2.get(caseIndex).toString(), new Text("P(s₂ → U) = ").getLayoutBounds().getWidth() + xOff + 100, yOff + dist + 8);
+    }
 
+    void drawGraph(GraphicsContext gc)
+    {
         gc.setStroke(Color.BLACK);
         gc.strokeLine(300, 200, 300, 400);
         gc.strokeLine(225, 300, 487.5, 300);
@@ -165,13 +256,13 @@ class GUtil
         //lambda = 0 -> x = 250
         //lambda = 4 -> x = 400
 
-        double lastY = tm.p1.get(caseIndex).evaluate(-2);
+        double lastY = d.p1.get(caseIndex).evaluate(-2);
 
         gc.setStroke(Color.RED);
 
         for (double lambda = -2 + dL; lambda <= 5; lambda += dL)
         {
-            double temp = tm.p1.get(caseIndex).evaluate(lambda);
+            double temp = d.p1.get(caseIndex).evaluate(lambda);
             if (Math.abs(temp - lastY) > 3 || convertY(temp) < 200 || convertY(temp) > 400)
             {
                 lastY = temp;
@@ -181,13 +272,13 @@ class GUtil
             lastY = temp;
         }
 
-        lastY = tm.p2.get(caseIndex).evaluate(-2);
+        lastY = d.p2.get(caseIndex).evaluate(-2);
 
         gc.setStroke(Color.BLUE);
 
         for (double lambda = -2 + dL; lambda <= 5; lambda += dL)
         {
-            double temp = tm.p2.get(caseIndex).evaluate(lambda);
+            double temp = d.p2.get(caseIndex).evaluate(lambda);
             if (Math.abs(temp - lastY) > 3 || convertY(temp) < 200 || convertY(temp) > 400)
             {
                 lastY = temp;

@@ -4,22 +4,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+
+import static com.company.Driver.arrows;
+import static com.company.Driver.states;
 
 class TransitionMatrix
 {
     //map.get(s1).get(s2) -> gives P(s1 -> s2)
     HashMap<State, HashMap<State, RESum>> map, map2;
-    ArrayList<State> states;
-    static ArrayList<Arrow> arrows = new ArrayList<>();
-
-    //stores all the information regarding "bad cases" (ie the upset criteria doesn't work)
-    ArrayList<State> bs1 = new ArrayList<>(), bs2 = new ArrayList<>();
-    ArrayList<RESum> p1 = new ArrayList<>(), p2 = new ArrayList<>();
-    ArrayList<HashSet<State>> bu = new ArrayList<>();
-
-    ArrayList<HashSet<State>> upsets;
-    HashMap<HashSet<State>, HashSet<State>> generators = new HashMap<>();
 
     void findCoupling()
     {
