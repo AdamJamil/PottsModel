@@ -24,7 +24,8 @@ class Driver
     ArrayList<HashSet<State>> upsets;
     HashMap<HashSet<State>, HashSet<State>> generators = new HashMap<>();
 
-    HashMap<State, HashSet<State>> partialOrder;
+    HashMap<State, HashSet<State>> partialOrder, temp;
+    ArrayList<HashMap<State, HashSet<State>>> partialOrders = new ArrayList<>();
 
     Driver()
     {
@@ -43,6 +44,7 @@ class Driver
 
         while (!good)
         {
+            partialOrders.add(copy(partialOrder));
             initializeMinUpset(partialOrder);
             findUpsets(partialOrder);
             oneStepCoupling(partialOrder);
@@ -65,11 +67,13 @@ class Driver
                 else
                 {
                     System.out.println("sakusen kanryo!!!");
-                    for (State state : partialOrder.keySet())
-                        System.out.println(state + ": " + partialOrder.get(state));
-                    System.out.println(partialOrder.get(states.get(0)).size());
+//                    for (State state : partialOrder.keySet())
+//                        System.out.println(state + ": " + partialOrder.get(state));
+//                    System.out.println(partialOrder.get(states.get(0)).size());
                 }
         }
+
+        partialOrders.add(partialOrder);
 
         for (State s1 : states)
             for (State s2 : states)
@@ -77,6 +81,40 @@ class Driver
                     if (partialOrder.get(s1).contains(s2) && partialOrder.get(s2).contains(s3))
                         if (!partialOrder.get(s1).contains(s3))
                             System.out.println(":((((((((((((");
+
+        //printMinPartialOrder(partialOrder);
+    }
+
+    //this will completely mess up the partialOrder!
+    void printMinPartialOrder(HashMap<State, HashSet<State>> partialOrder)
+    {
+        for (State state : partialOrder.keySet())
+        {
+            ArrayList<State> set = new ArrayList<>(state.minUpset);
+            set.remove(state);
+            outer:
+            for (int i = set.size() - 1; i >= 0; i--)
+                for (State otherState : set)
+                {
+                    if (set.get(i).equals(otherState))
+                        continue;
+                    if (partialOrder.get(set.get(i)).contains(otherState))
+                    {
+                        set.remove(i);
+                        continue outer;
+                    }
+                }
+            System.out.println(state + ": " + set);
+        }
+    }
+
+    HashMap<State, HashSet<State>> copy(HashMap<State, HashSet<State>> map)
+    {
+        HashMap<State, HashSet<State>> out = new HashMap<>();
+        for (State state : map.keySet())
+            out.put(state, new HashSet<>(map.get(state)));
+
+        return out;
     }
 
     HashMap<State, HashSet<State>> guessAndInitPartialOrder()
@@ -118,60 +156,33 @@ class Driver
     void findUpsets(HashMap<State, HashSet<State>> partialOrder)
     {
         upsets = new ArrayList<>();
+        temp = partialOrder;
 
-        for (State state : states)
-            state.seen = false;
-
-        for (State s1 : states)
-        {
-            s1.seen = true;
-
-            //find all states incomparable to s1
-            HashSet<State> incompStates = new HashSet<>();
-
-            for (State s2 : states)
-            {
-                if (s2.seen)
-                    continue;
-                if (!partialOrder.get(s1).contains(s2) && !partialOrder.get(s2).contains(s1)) //incomp
-                    incompStates.add(s2);
-            }
-
-            incompStates.add(s1);
-
-            //now combine all subsets of incomp, union each one with s1, and up-close all of them
-            ArrayList<HashSet<State>> powerSet = powerSet(incompStates);
-
-            outer: for (HashSet<State> incompSubset : powerSet)
-            {
-                HashSet<State> upset = new HashSet<>();
-
-                for (State s2 : incompSubset)
-                    upset.addAll(s2.minUpset);
-
-                for (int i = 0; i < upsets.size(); i++)
-                {
-                    HashSet<State> set = upsets.get(i);
-
-                    if (equal(upset, set))
-                    {
-                        if (incompSubset.size() < generators.get(upset).size())
-                        {
-                            upsets.remove(i);
-                            upsets.add(upset);
-                            generators.remove(set);
-                            generators.put(upset, incompSubset);
-                        }
-                        continue outer;
-                    }
-                }
-
-                upsets.add(upset);
-                generators.put(upset, incompSubset);
-            }
-        }
+        generateAntichains(new HashSet<>(), new HashSet<>(states));
 
         System.out.println(upsets.size());
+    }
+
+    void generateAntichains(HashSet<State> curr, HashSet<State> allowed)
+    {
+        if (allowed.isEmpty())
+        {
+            HashSet<State> upset = new HashSet<>();
+            for (State state : curr)
+                upset.addAll(state.minUpset);
+            upsets.add(upset);
+            return;
+        }
+
+        State next = allowed.iterator().next();
+        allowed.remove(next);
+        HashSet<State> other = new HashSet<>(curr), otherAllowed = new HashSet<>(allowed);
+        generateAntichains(curr, allowed);
+
+        other.add(next);
+        otherAllowed.removeAll(next.minUpset);
+        otherAllowed.removeAll(temp.get(next));
+        generateAntichains(other, otherAllowed);
     }
 
     HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();

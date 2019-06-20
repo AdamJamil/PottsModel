@@ -10,6 +10,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+import java.util.HashMap;
+import java.util.HashSet;
+
 import static com.company.Main.drawBadCases;
 import static com.company.Main.n;
 import static com.company.Main.tonyMode;
@@ -22,7 +25,7 @@ class GUtil
     private static int xOff = 40, yOff = 90;
     private static double dist = 50;
     static double width = 800, height = yOff + dist * (n + 2);
-    private static int caseIndex = 0, upsetIndex = 0;
+    private static int caseIndex = 0, upsetIndex = 0, partialOrderIndex = 0;
     private static double dL = 0.01;
     Driver d;
     TransitionMatrix tm;
@@ -73,7 +76,8 @@ class GUtil
                 }
                 else if (Main.drawPartialOrdering)
                 {
-                    //do nothing duh
+                    partialOrderIndex++;
+                    partialOrderIndex %= d.partialOrders.size();
                 }
             }
             else if (e.getCode().equals(KeyCode.Z))
@@ -87,6 +91,8 @@ class GUtil
 
     void drawPartialOrdering(GraphicsContext gc)
     {
+        HashMap<State, HashSet<State>> partialOrder = d.partialOrders.get(partialOrderIndex);
+
         gc.setStroke(Color.BLACK);
         for (int i = 1; i < n + 1; i++)
         {
@@ -99,15 +105,15 @@ class GUtil
                 State right = Driver.arrows.get(1).map(s1);
                 State downright = Driver.arrows.get(2).map(s1);
 
-                if (d.partialOrder.get(s1).contains(down))
+                if (partialOrder.get(s1).contains(down))
                     drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * j + xShift, yOff + dist * i + yShift);
 
-                if (d.partialOrder.get(right).contains(s1))
+                if (partialOrder.get(right).contains(s1))
                     drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift);
 
-                if (d.partialOrder.get(s1).contains(downright))
+                if (partialOrder.get(s1).contains(downright))
                     drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * (j + 1) + xShift, yOff + dist * i + yShift);
             }
@@ -115,14 +121,14 @@ class GUtil
             State rowEnd = new State(new int[]{n - i + 1, n - (n - i + 1 + (rowStates - 1)), (rowStates - 1)});
 
             State down = Driver.arrows.get(3).map(rowEnd);
-            if (d.partialOrder.get(rowEnd).contains(down))
+            if (partialOrder.get(rowEnd).contains(down))
                 drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
                         xOff + dist * (rowStates - 1) + xShift, yOff + dist * i + yShift);
 
             if (i % 2 == 0)
             {
                 State downright = Driver.arrows.get(2).map(rowEnd);
-                if (d.partialOrder.get(rowEnd).contains(downright))
+                if (partialOrder.get(rowEnd).contains(downright))
                     drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
                             xOff + dist * ((rowStates - 1) + 1) + xShift, yOff + dist * i + yShift);
             }
@@ -133,7 +139,7 @@ class GUtil
         {
             State s1 = new State(new int[]{0, n - j, j});
             State right = Driver.arrows.get(1).map(s1);
-            if (d.partialOrder.get(right).contains(s1))
+            if (partialOrder.get(right).contains(s1))
                 drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * n + yShift,
                         xOff + dist * j + xShift, yOff + dist * n + yShift);
         }
