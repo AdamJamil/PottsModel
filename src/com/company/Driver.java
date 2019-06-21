@@ -136,6 +136,9 @@ class Driver
 
                 for (int k = 0; k < minUpset.length; k++)
                 {
+                    if (!set[k])
+                        continue;
+
                     if (j == k)
                         continue;
 
