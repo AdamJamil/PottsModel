@@ -7,9 +7,12 @@ class Rational
 {
     int p = 0, q = 1;
 
-    Rational()
+    Rational copy()
     {
+        return new Rational(p, q);
     }
+
+    Rational(){}
 
     Rational(int a, int b)
     {
@@ -27,24 +30,20 @@ class Rational
         return new BigDecimal(p).divide(new BigDecimal(q), 50, RoundingMode.CEILING);
     }
 
-    Rational multiply(Rational other)
+    void multiply(Rational other)
     {
-        int outP = p * other.p, outQ = q * other.q;
-        int gcd = gcd(outP, outQ);
-        outP /= gcd;
-        outQ /= gcd;
-
-        return new Rational(outP, outQ);
+        int gcd = gcd(other.p, other.q);
+        p *= other.p / gcd;
+        q *= other.q / gcd;
     }
 
-    Rational add(Rational other)
+    void add(Rational other)
     {
-        int outP = (p * other.q) + (other.p * q), outQ = q * other.q;
-        int gcd = gcd(outP, outQ);
-        outP /= gcd;
-        outQ /= gcd;
-
-        return new Rational(outP, outQ);
+        p = (p * other.q) + (other.p * q);
+        q *= other.q;
+        int gcd = gcd(p, q);
+        p /= gcd;
+        q /= gcd;
     }
 
     @Override

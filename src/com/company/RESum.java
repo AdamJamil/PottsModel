@@ -8,6 +8,17 @@ class RESum
 {
     ArrayList<RationalExpression> terms = new ArrayList<>();
 
+    RESum copy()
+    {
+        RESum out = new RESum();
+        terms.clear();
+
+        for (RationalExpression term : terms)
+            out.terms.add(term.copy());
+
+        return out;
+    }
+
     RESum()
     {
         terms.add(new RationalExpression());
@@ -31,89 +42,94 @@ class RESum
         return out;
     }
 
-    RESum multiply(RESum other)
+    //looks good
+    void multiply(RESum other)
     {
-        RESum out = new RESum();
-
+        ArrayList<RationalExpression> newTerms = new ArrayList<>();
         for (RationalExpression t1 : terms)
             for (RationalExpression t2 : other.terms)
-                out.terms.add(t1.multiply(t2));
+            {
+                RationalExpression temp = t1.copy();
+                temp.multiply(t2);
+                newTerms.add(temp);
+            }
 
-        return fix(out);
+        terms = newTerms;
     }
 
-    RESum add(RationalExpression newTerm)
+    //looks good
+    void add(RationalExpression newTerm)
     {
-        RESum out = new RESum();
+        if (newTerm.num.equals(Main.zero))
+            return;
 
         for (RationalExpression term : terms)
+            if (term.denom.equals(newTerm.denom))
+            {
+                term.num.add(newTerm.num);
+                return;
+            }
+
+        terms.add(newTerm.copy());
+    }
+
+    //looks good
+    void add(RESum newTerms)
+    {
+        for (RationalExpression term : newTerms.terms)
+            add(term);
+    }
+
+    //looks good
+    void multiply(Rational r)
+    {
+        for (RationalExpression term : terms)
+            term.multiply(r);
+    }
+
+    void simplify()
+    {
+        ArrayList<RationalExpression> newTerms = new ArrayList<>();
+
+        outer: for (RationalExpression term : terms)
         {
-            if (term.num.coefficients.size() == 1 && term.num.coefficients.get(0).p == 0)
-                continue;
-            out.terms.add(term.multiply(new Rational(1, 1)));
+            for (RationalExpression newTerm : newTerms)
+                if (term.denom.equals(newTerm.denom))
+                {
+                    newTerm.num.add(term.num);
+                    continue outer;
+                }
+
+            newTerms.add(term);
         }
 
-        if (newTerm.num.equals(Main.zero))
-            return out;
-
-        out.terms.add(newTerm.multiply(new Rational(1, 1)));
-
-        return fix(out);
+        terms = newTerms;
     }
 
-    RESum add(RESum newTerms)
-    {
-        RESum out = null;
-
-        for (RationalExpression newTerm : newTerms.terms)
-            if (out == null)
-                out = this.add(newTerm);
-            else
-                out = out.add(newTerm);
-
-        return out;
-    }
-
-    RESum multiply(Rational r)
-    {
-        RESum out = new RESum();
-        for (RationalExpression term : terms)
-            out.terms.add(term.multiply(r));
-
-        for (int i = out.terms.size() - 1; i >= 0; i--)
-            if (out.terms.get(i).num.equals(Main.zero))
-                out.terms.remove(i);
-
-        if (out.terms.size() == 0)
-            out.terms.add(new RationalExpression());
-
-        return out;
-    }
-
-    RESum fix(RESum out)
-    {
-        for (int i = out.terms.size() - 1; i >= 0; i--)
-            if (out.terms.get(i).num.equals(Main.zero))
-                out.terms.remove(i);
-
-        boolean edited;
-        do
-        {
-            edited = false;
-            outer: for (int i = 0; i < out.terms.size(); i++)
-                for (int j = i + 1; j < out.terms.size(); j++)
-                    if (out.terms.get(i).denom.equals(out.terms.get(j).denom))
-                    {
-                        edited = true;
-                        //out.terms.get(i).num = out.terms.get(i).num.add(out.terms.get(j).num);
-                        out.terms.set(i, out.terms.get(i).add(out.terms.get(j)));
-                        out.terms.remove(j); //not suspicious!
-                        break outer;
-                    }
-        } while (edited);
-
-        return out;
-    }
+//    RESum fix(RESum out)
+//    {
+//        for (int i = out.terms.size() - 1; i >= 0; i--)
+//            if (out.terms.get(i).num.equals(Main.zero))
+//                out.terms.remove(i);
+//
+//        boolean edited;
+//        do
+//        {
+//            edited = false;
+//            outer: for (int i = 0; i < out.terms.size(); i++)
+//                for (int j = i + 1; j < out.terms.size(); j++)
+//                    if (out.terms.get(i).denom.equals(out.terms.get(j).denom))
+//                    {
+//                        edited = true;
+//                        //out.terms.get(i).num = out.terms.get(i).num.add(out.terms.get(j).num);
+//                        out.terms.set(i, out.terms.get(i).add(out.terms.get(j)));
+//                        out.terms.remove(j); //not suspicious!
+//                        break outer;
+//                    }
+//        } while (edited);
+//
+//        return out;
+//    }
 
     @SuppressWarnings("Duplicates")
     boolean geq(RESum other)
@@ -130,28 +146,29 @@ class RESum
         for (RationalExpression term : other.terms)
             denoms.add(term.denom);
 
-        Polynomial f = Main.zero;
+        Polynomial f = Main.zero.copy();
 
         for (RationalExpression term : terms)
         {
-            Polynomial temp = term.num;
+            Polynomial temp = term.num.copy();
 
             for (Polynomial denom : denoms)
                 if (!denom.equals(term.denom))
-                    temp = temp.multiply(denom);
+                    temp.multiply(denom);
 
-            f = f.add(temp);
+            f.add(temp);
         }
 
         for (RationalExpression term : other.terms)
         {
-            Polynomial temp = term.num;
+            Polynomial temp = term.num.copy();
 
             for (Polynomial denom : denoms)
                 if (!denom.equals(term.denom))
-                    temp = temp.multiply(denom);
+                    temp.multiply(denom);
 
-            f = f.add(temp.multiply(new Rational(-1, 1)));
+            temp.multiply(new Rational(-1, 1));
+            f.add(temp);
         }
 
         boolean fast = true;
@@ -179,7 +196,7 @@ class RESum
         for (RationalExpression term : other.terms)
             denoms.add(term.denom);
 
-        Polynomial f = Main.zero.multiply(Main.one);
+        Polynomial f = Main.zero.copy();
 
         for (RationalExpression term : terms)
         {
@@ -187,20 +204,21 @@ class RESum
 
             for (Polynomial denom : denoms)
                 if (!denom.equals(term.denom))
-                    temp = temp.multiply(denom);
+                    temp.multiply(denom);
 
-            f = f.add(temp);
+            f.add(temp);
         }
 
         for (RationalExpression term : other.terms)
         {
-            Polynomial temp = term.num;
+            Polynomial temp = term.num.copy();
 
             for (Polynomial denom : denoms)
                 if (!denom.equals(term.denom))
-                    temp = temp.multiply(denom);
+                    temp.multiply(denom);
 
-            f = f.add(temp.multiply(new Rational(-1, 1)));
+            temp.multiply(new Rational(-1, 1));
+            f.add(temp);
         }
 
         return f.compare();
@@ -218,11 +236,12 @@ class RESum
     @Override
     public boolean equals(Object other)
     {
-        int maxDegree = 1000; //TODO: change me!
-        for (double lambda = 1.1; lambda < maxDegree; lambda *= 1.1)
-            if (evaluate(lambda) != ((RESum) other).evaluate(lambda))
-                return false;
-        return true;
+        return evaluate(1.41421356237309504880168872420969) == ((RESum) other).evaluate(1.41421356237309504880168872420969);
+//        int maxDegree = 50;
+//        for (double lambda = 1.1; lambda < maxDegree; lambda *= 1.1)
+//            if (evaluate(lambda) != ((RESum) other).evaluate(lambda))
+//                return false;
+//        return true;
     }
 
     String LaTeX()

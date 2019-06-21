@@ -24,7 +24,7 @@ class PartialSolution
         RESum currentProb = new RESum();
 
         for (Arrow arrow2 : allowedArrows2.get(a1))
-            currentProb = currentProb.add(conditionalProb.get(a1).get(arrow2));
+            currentProb.add(conditionalProb.get(a1).get(arrow2));
 
         //check if current a1 is done
         if (currentProb.equals(prob1.get(a1)))
@@ -45,21 +45,24 @@ class PartialSolution
                 {
                     newBranch.conditionalProb.put(arrow1, new HashMap<>());
                     for (Arrow arrow2 : conditionalProb.get(arrow1).keySet())
-                        newBranch.conditionalProb.get(arrow1).put(arrow2, conditionalProb.get(arrow1).get(arrow2).multiply(new Rational(1, 1)));
+                        newBranch.conditionalProb.get(arrow1).put(arrow2, conditionalProb.get(arrow1).get(arrow2).copy());
                 }
 
                 for (Arrow arrow2 : residualProb2.keySet())
-                    newBranch.residualProb2.put(arrow2, residualProb2.get(arrow2).multiply(new Rational(1, 1)));
+                    newBranch.residualProb2.put(arrow2, residualProb2.get(arrow2).copy());
 
                 //compare residual probability of a2 to prob1(a1) - currentProb
-                RESum temp = prob1.get(a1).add(currentProb.multiply(new Rational(-1, 1)));
+                RESum temp = prob1.get(a1).copy();
+                temp.add(currentProb.copy());
 
                 switch (residualProb2.get(a2).compare(temp))
                 {
                     case 0: //greater than
                     {
                         //replace residualProb2 with resid - temp
-                        newBranch.residualProb2.put(a2, residualProb2.get(a2).add(temp.multiply(new Rational(-1, 1))));
+                        RESum negTemp = temp.copy();
+                        negTemp.multiply(new Rational(-1, 1));
+                        residualProb2.get(a2).add(negTemp);
                         //update conditional prob
                         newBranch.conditionalProb.get(a1).put(a2, temp);
                     }
@@ -67,7 +70,7 @@ class PartialSolution
                     case 1: //less than
                     {
                         //set residualProb2 to 0
-                        newBranch.residualProb2.put(a2, Main.sumZero.multiply(new Rational(1, 1)));
+                        newBranch.residualProb2.put(a2, Main.sumZero.copy());
                         //update conditional prob
                         newBranch.conditionalProb.get(a1).put(a2, residualProb2.get(a2));
                     }
@@ -80,7 +83,7 @@ class PartialSolution
                     case 3: //equal
                     {
                         //set residualProb2 to 0
-                        newBranch.residualProb2.put(a2, Main.sumZero.multiply(new Rational(1, 1)));
+                        newBranch.residualProb2.put(a2, Main.sumZero.copy());
                         //update conditional prob
                         newBranch.conditionalProb.get(a1).put(a2, residualProb2.get(a2));
                     }

@@ -109,7 +109,9 @@ class TransitionMatrix
                     if (!a1.valid(s1) || !a2.valid(a1.map(s1)))
                         continue;
                     State s2 = a1.map(s1), s3 = a2.map(s2);
-                    map2.get(s1).put(s3, map2.get(s1).get(s3).add(map.get(s1).get(s2).multiply(map.get(s2).get(s3))));
+                    RESum temp = map.get(s1).get(s2).copy();
+                    temp.multiply(map.get(s2).get(s3));
+                    map2.get(s1).get(s3).add(temp);
                 }
         }
 
@@ -117,7 +119,7 @@ class TransitionMatrix
         {
             RESum total = new RESum();
             for (State s2 : states)
-                total = total.add(map2.get(s1).get(s2));
+                total.add(map2.get(s1).get(s2));
         }
     }
 
@@ -176,24 +178,28 @@ class TransitionMatrix
                     for (; state2 < states.size(); state2++)
                         if (states.get(state2).equals(endState))
                         {
-                            Polynomial prob = Main.one.multiply(pPickSource);
+                            Polynomial prob = Main.one.copy();
+                            prob.multiply(pPickSource);
                             for (int i = 0; i < startOrder[dest] - ((source == dest) ? 1 : 0); i++)
-                                prob = prob.multiply(Main.x);
-                            RationalExpression re = new RationalExpression(prob.multiply(Main.one));
+                                prob.multiply(Main.x);
+                            RationalExpression re = new RationalExpression(prob.copy());
                             map2.put(re, state1);
                             map3.put(re, state2);
                             break;
                         }
                 }
 
-                Polynomial denom = Main.zero.multiply(Main.zero);
+                Polynomial denom = Main.zero.copy();
                 for (RationalExpression rationalExpression : map2.keySet())
-                    denom = denom.add(rationalExpression.num);
+                    denom.add(rationalExpression.num);
 
-                denom = denom.multiply(new Rational(pPickSource.q, pPickSource.p));
+                denom.multiply(new Rational(pPickSource.q, pPickSource.p));
 
                 for (RationalExpression rE : map2.keySet())
-                    map.get(states.get(map2.get(rE))).put(states.get(map3.get(rE)), map.get(states.get(map2.get(rE))).get(states.get(map3.get(rE))).add(rE.divide(denom.multiply(Main.one))));
+                {
+                    rE.divide(denom);
+                    map.get(states.get(map2.get(rE))).get(states.get(map3.get(rE))).add(rE);
+                }
             }
         }
 

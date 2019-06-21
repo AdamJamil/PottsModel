@@ -21,6 +21,15 @@ class RationalExpression
         return num.evaluate(lambda) / denom.evaluate(lambda);
     }
 
+    RationalExpression copy()
+    {
+        RationalExpression out = new RationalExpression();
+        out.num = num.copy();
+        out.denom = denom.copy();
+
+        return out;
+    }
+
     RationalExpression()
     {
         denom = new Polynomial();
@@ -33,70 +42,42 @@ class RationalExpression
 
     RationalExpression(Polynomial p)
     {
-        num = p.multiply(Main.one);
+        num = p.copy();
         denom = new Polynomial();
         denom.degree = 0;
         denom.coefficients.add(new Rational(1, 1));
     }
 
-    RationalExpression add(RationalExpression other)
+    //looks good
+    void add(RationalExpression other)
     {
         //assumes that they have the same denom!
         if (!this.denom.equals(other.denom))
         {
             System.out.println("Error in addition; RationalExpression.java, add()");
-            return null;
+            return;
         }
 
-        Polynomial num1 = this.num.multiply(new Rational(1, 1));
-        Polynomial num2 = other.num.multiply(new Rational(1, 1));
-        RationalExpression out = new RationalExpression();
-        out.num = num1.add(num2);
-        out.denom = denom.multiply(Main.one);
-
-        return out;
+        num.add(other.num);
     }
 
-    RationalExpression divide(Polynomial p)
+    //looks good
+    void divide(Polynomial p)
     {
-        RationalExpression rationalExpression = new RationalExpression(num.multiply(new Rational(1, 1)));
-        rationalExpression.denom = denom.multiply(p);
-
-        return rationalExpression;
+        denom.multiply(p);
     }
 
-    RationalExpression multiply(Rational r)
+    //looks good
+    void multiply(Rational r)
     {
-        Polynomial newNum = num.multiply(new Rational(r.p, 1));
-        Polynomial newDenom = denom.multiply(new Rational(r.q, 1));
-        RationalExpression out = new RationalExpression();
-        out.num = newNum;
-        out.denom = newDenom;
-
-        return out;
+        num.multiply(r);
     }
 
-    RationalExpression multiply(RationalExpression r)
+    //looks good
+    void multiply(RationalExpression r)
     {
-        RationalExpression out = this.multiply(new Rational(1, 1));
-        out.num = out.num.multiply(r.num);
-        out.denom = out.denom.multiply(r.denom);
-
-        return out;
-    }
-
-    static int lcm(ArrayList<Integer> list, int n, int pos)
-    {
-        if (pos == list.size())
-            return n;
-        return lcm(list, list.get(pos) * n / Rational.gcd(list.get(pos), n), pos + 1);
-    }
-
-    static int gcd(ArrayList<Integer> list, int n, int pos)
-    {
-        if (pos == list.size())
-            return n;
-        return gcd(list, Rational.gcd(list.get(pos), n), pos + 1);
+        num.multiply(r.num);
+        denom.multiply(r.denom);
     }
 
     @Override

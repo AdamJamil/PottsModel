@@ -105,6 +105,11 @@ class Driver
                 if (arrow.valid(s1))
                     tm.arr[i][states.indexOf(arrow.map(s1))] = tm.map.get(states.get(i)).get(arrow.map(s1));
         }
+
+        for (RESum[] reSums : tm.arr)
+            for (RESum reSum : reSums)
+                if (reSum != null)
+                    reSum.simplify();
     }
 
     void checkTransitivity()
@@ -254,17 +259,17 @@ class Driver
                 if (i != j && partialOrder[i][j])
                     for (boolean[] upset : upsets)
                     {
-                        RESum p1 = sumZero;
-                        RESum p2 = sumZero;
+                        RESum p1 = sumZero.copy();
+                        RESum p2 = sumZero.copy();
 
                         for (int k = 0; k < upset.length; k++)
                             if (upset[k])
                             {
                                 if (tm.arr[i][k] != null)
-                                    p1 = p1.add(tm.arr[i][k]);
+                                    p1.add(tm.arr[i][k]);
 
                                 if (tm.arr[j][k] != null)
-                                    p2 = p2.add(tm.arr[j][k]);
+                                    p2.add(tm.arr[j][k]);
                             }
 
                         boolean temp;
@@ -302,13 +307,13 @@ class Driver
             State s1 = bs1.get(i), s2 = bs2.get(i);
             HashSet<State> upset = bu.get(i);
 
-            RESum p1 = sumZero.multiply(new Rational(1, 1));
-            RESum p2 = sumZero.multiply(new Rational(1, 1));
+            RESum p1 = sumZero.copy();
+            RESum p2 = sumZero.copy();
 
             for (State target : upset)
             {
-                p1 = p1.add(tm.map2.get(s1).get(target));
-                p2 = p2.add(tm.map2.get(s2).get(target));
+                p1.add(tm.map2.get(s1).get(target));
+                p2.add(tm.map2.get(s2).get(target));
             }
 
             int temp;
@@ -556,62 +561,5 @@ class Driver
         }
 
         return partitions(out, pos + 1);
-    }
-
-    void printDenominators()
-    {
-        for (n = 2; n < 20; n++)
-        {
-            ArrayList<int[]> start = new ArrayList<>(), good = new ArrayList<>();
-
-            for (int i = 0; i <= n; i++)
-            {
-                int[] temp = new int[3];
-                temp[0] = i;
-                start.add(temp);
-            }
-
-            start = partitions(start, 1);
-
-            for (int[] ints : start)
-            {
-                int a = ints[0], b = ints[1], c = ints[2];
-                if (a + b + c == n - 1 && a >= b && b >= c)
-                    good.add(ints);
-            }
-
-            Polynomial one = new Polynomial();
-            one.degree = 0;
-            one.coefficients.add(new Rational(1, 1));
-
-            Polynomial x = new Polynomial();
-            x.degree = 1;
-            x.coefficients.add(new Rational());
-            x.coefficients.add(new Rational(1, 1));
-
-            Polynomial ans = one.multiply(one);
-            for (int[] ints : good)
-            {
-                Polynomial temp = new Polynomial();
-                temp.coefficients.add(new Rational());
-                for (int i = 0; i < 3; i++)
-                {
-                    if (ints[i] == 0)
-                        temp = temp.add(one);
-                    else
-                    {
-                        Polynomial pow = one.multiply(one);
-                        for (int j = 0; j < ints[i]; j++)
-                            pow = pow.multiply(x);
-                        temp = temp.add(pow);
-                    }
-                }
-                //System.out.println(temp);
-                //ans = ans.multiply(temp);
-                //System.out.println();
-                System.out.print("(" + temp + ")");
-            }
-            System.out.println();
-        }
     }
 }

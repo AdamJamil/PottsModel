@@ -64,8 +64,7 @@ class Polynomial
                 return 3;
             if (coefficients.get(0).value() > 0)
                 return 0;
-            if (coefficients.get(0).value() < 0)
-                return 1;
+            return 1;
         }
 
         Complex[] roots = this.findRoots();
@@ -118,20 +117,6 @@ class Polynomial
         return 2;
     }
 
-    Polynomial derivative()
-    {
-        Polynomial derivative = new Polynomial();
-        if (degree == 0)
-        {
-            derivative.coefficients.add(new Rational());
-            return derivative;
-        }
-        derivative.degree = degree - 1;
-        for (int i = 1; i < coefficients.size(); i++)
-            derivative.coefficients.add(coefficients.get(i).multiply(new Rational(i, 1)));
-        return derivative;
-    }
-
     BigDecimal evaluatePrecise(BigDecimal lambda)
     {
         BigDecimal sum = new BigDecimal(0), pow = new BigDecimal(1);
@@ -169,70 +154,20 @@ class Polynomial
         return result;
     }
 
-    Polynomial add(Polynomial other)
+    //looks good
+    void add(Polynomial other)
     {
-        Polynomial out = new Polynomial();
-
         for (int i = 0; i < Math.max(coefficients.size(), other.coefficients.size()); i++)
         {
             Rational temp = new Rational();
             if (i < coefficients.size())
-                temp = temp.add(coefficients.get(i));
+                temp.add(coefficients.get(i));
             if (i < other.coefficients.size())
-                temp = temp.add(other.coefficients.get(i));
-            out.coefficients.add(temp);
-        }
-
-        for (int i = out.coefficients.size() - 1; i > 0; i--)
-            if (out.coefficients.get(i).p == 0)
-                out.coefficients.remove(i);
+                temp.add(other.coefficients.get(i));
+            if (coefficients.size() > i)
+                coefficients.set(i, temp);
             else
-                break;
-
-        out.degree = out.coefficients.size() - 1;
-
-        if (out.degree == 1 && out.coefficients.get(0).p == 0 && out.coefficients.size() == 1)
-            degree = 0;
-
-        return out;
-    }
-
-    Polynomial multiply(Polynomial other)
-    {
-        return new Polynomial(this, other);
-    }
-
-    Polynomial multiply(Rational rat)
-    {
-        Polynomial out = new Polynomial();
-
-        if (rat.p == 0)
-        {
-            out.coefficients.add(new Rational(0, 1));
-            return out;
-        }
-
-        for (int i = 0; i < coefficients.size(); i++)
-            out.coefficients.add(coefficients.get(i).multiply(rat));
-        out.degree = out.coefficients.size() - 1;
-
-        return out;
-    }
-
-    Polynomial()
-    {
-    }
-
-    Polynomial(Polynomial f, Polynomial g)
-    {
-        degree = f.degree + g.degree;
-
-        for (int outDegree = 0; outDegree <= degree; outDegree++)
-        {
-            Rational current = new Rational();
-            for (int firstDegree = Math.max(0, outDegree - g.degree); firstDegree <= Math.min(outDegree, f.degree); firstDegree++)
-                current = current.add(f.coefficients.get(firstDegree).multiply(g.coefficients.get(outDegree - firstDegree)));
-            coefficients.add(current);
+                coefficients.add(temp);
         }
 
         for (int i = coefficients.size() - 1; i > 0; i--)
@@ -246,6 +181,63 @@ class Polynomial
         if (degree == 1 && coefficients.get(0).p == 0 && coefficients.size() == 1)
             degree = 0;
     }
+
+    //looks BAD
+    void multiply(Polynomial other)
+    {
+        ArrayList<Rational> newCoefficients = new ArrayList<>();
+
+        for (int outDegree = 0; outDegree <= degree + other.degree; outDegree++)
+        {
+            Rational current = new Rational();
+            for (int firstDegree = Math.max(0, outDegree - other.degree); firstDegree <= Math.min(outDegree, degree); firstDegree++)
+            {
+                Rational temp = coefficients.get(firstDegree).copy();
+                temp.multiply(other.coefficients.get(outDegree - firstDegree));
+                current.add(temp);
+            }
+            newCoefficients.add(current);
+        }
+
+        coefficients = newCoefficients;
+
+        for (int i = coefficients.size() - 1; i > 0; i--)
+            if (coefficients.get(i).p == 0)
+                coefficients.remove(i);
+            else
+                break;
+
+        degree = coefficients.size() - 1;
+
+        if (degree == 1 && coefficients.get(0).p == 0 && coefficients.size() == 1)
+            degree = 0;
+    }
+
+    //looks good
+    void multiply(Rational rat)
+    {
+        if (rat.p == 0)
+        {
+            coefficients.clear();
+            coefficients.add(new Rational(0, 1));
+            degree = 0;
+            return;
+        }
+
+        for (Rational coefficient : coefficients)
+            coefficient.multiply(rat);
+    }
+
+    Polynomial copy()
+    {
+        Polynomial out = new Polynomial();
+        for (Rational rational : coefficients)
+            out.coefficients.add(new Rational(rational.p, rational.q));
+        out.degree = degree;
+        return out;
+    }
+
+    Polynomial(){}
 
     String LaTeX()
     {
@@ -322,7 +314,7 @@ class Polynomial
     {
         Rational sum = new Rational();
         for (Rational coefficient : coefficients)
-            sum = sum.add(coefficient);
+            sum.add(coefficient);
         return sum.p - sum.q;
     }
 
@@ -357,36 +349,33 @@ class Polynomial
 
     Complex[] findRoots()
     {
-            if (degree == 0)
-                return new Complex[0];
+        Complex[] roots = new Complex[degree];
 
-            Complex[] roots = new Complex[degree];
+        Complex mult = new Complex(0.984886, 1.152571805);
+        roots[0] = new Complex(1, 0);
 
-            Complex mult = new Complex(0.984886, 1.152571805);
-            roots[0] = new Complex(1, 0);
+        for (int i = 1; i < degree; i++)
+            roots[i] = roots[i - 1].multiply(mult);
 
-            for (int i = 1; i < degree; i++)
-                roots[i] = roots[i - 1].multiply(mult);
+        for (int n = 0; n < 30; n++)
+        {
+            Complex[] next = new Complex[degree];
 
-            for (int n = 0; n < 30; n++)
+            for (int i = 0; i < degree; i++)
             {
-                Complex[] next = new Complex[degree];
-
-                for (int i = 0; i < degree; i++)
+                Complex temp = this.evaluate(roots[i]);
+                for (int j = 0; j < degree; j++)
                 {
-                    Complex temp = this.evaluate(roots[i]);
-                    for (int j = 0; j < degree; j++)
-                    {
-                        if (i == j)
-                            continue;
-                        Complex divisor = roots[i].subtract(roots[j]);
-                        temp = temp.multiply(divisor.inverse());
-                    }
-                    next[i] = roots[i].subtract(temp);
+                    if (i == j)
+                        continue;
+                    Complex divisor = roots[i].subtract(roots[j]);
+                    temp = temp.multiply(divisor.inverse());
                 }
-
-                System.arraycopy(next, 0, roots, 0, degree);
+                next[i] = roots[i].subtract(temp);
             }
+
+            System.arraycopy(next, 0, roots, 0, degree);
+        }
 
         return roots;
     }
