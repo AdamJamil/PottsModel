@@ -48,13 +48,13 @@ class Driver
         checkTransitivity();
         printMinPartialOrder(partialOrder);
 
-        for (RESum reSum : map.keySet())
-        {
-            for (RESum sum : map.get(reSum).keySet())
-            {
-                System.out.println(map.get(reSum).get(sum) + ": " + reSum + ",   " + sum);
-            }
-        }
+//        for (RESum reSum : map.keySet())
+//        {
+//            for (RESum sum : map.get(reSum).keySet())
+//            {
+//                System.out.println(map.get(reSum).get(sum) + ": " + reSum + ",   " + sum);
+//            }
+//        }
     }
 
     void fixPartialOrder()
@@ -234,7 +234,7 @@ class Driver
         generateAntichains(other, otherAllowed);
     }
 
-    HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
+    HashMap<RESum, HashMap<RESum, Boolean>> map = new HashMap<>();
 
     void oneStepCoupling(boolean[][] partialOrder)
     {
@@ -267,20 +267,20 @@ class Driver
                                     p2 = p2.add(tm.arr[j][k]);
                             }
 
-                        int temp;
+                        boolean temp;
 
                         if (map.containsKey(p1) && map.get(p1).containsKey(p2))
                             temp = map.get(p1).get(p2);
                         else
                         {
                             //System.out.println(p1 + "  " + p2);
-                            temp = p1.compare(p2);
+                            temp = p1.geq(p2);
                             if (!map.containsKey(p1))
                                 map.put(p1, new HashMap<>());
                             map.get(p1).put(p2, temp);
                         }
 
-                        if (temp == 2 || temp == 1)
+                        if (!temp)
                         {
                             blacklist[i][j] = true;
                             continue outer;

@@ -197,12 +197,6 @@ class TransitionMatrix
             }
         }
 
-        for (State s1 : map.keySet())
-            for (State s2 : map.get(s1).keySet())
-                for (RationalExpression rationalExpression : map.get(s1).get(s2).terms)
-                    if (!rationalExpression.num.equals(Main.zero))
-                        rationalExpression.setCoefficient();
-
         //printBS(states);
 
         if (Main.printTM)
@@ -221,25 +215,7 @@ class TransitionMatrix
                     {
                         if (rE.num.equals(Main.zero))
                             continue;
-                        temp += "\\frac{";
-                        if (rE.coeff.p != 1)
-                            temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
-                        else
-                            temp += rE.num.LaTeX() + "}{";
-
-                        if (rE.coeff.q != 1)
-                            temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
-                        else
-                            temp += rE.denom.LaTeX() + "}";
-                        //                    if (!rE.coeff.toString().equals(""))
-                        //                        if (rE.coeff.q == 1)
-                        //                            temp += rE.coeff.p + " \\cdot ";
-                        //                        else
-                        //                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
-                        //
-                        //                    if (rE.denom.degree != 0)
-                        //                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
-                        temp += " + ";
+                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "} + ";
                     }
                     if (temp.equals(""))
                         temp = "0000";

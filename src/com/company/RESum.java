@@ -112,33 +112,62 @@ class RESum
                     }
         } while (edited);
 
-        for (RationalExpression term : out.terms)
-            term.setCoefficient();
-
         return out;
     }
 
+    @SuppressWarnings("Duplicates")
+    boolean geq(RESum other)
+    {
+        for (double lambda = 1.05; lambda <= 5; lambda *= 1.05)
+            if (evaluate(lambda) < other.evaluate(lambda) - 0.000001)
+                return false;
+
+        HashSet<Polynomial> denoms = new HashSet<>();
+
+        for (RationalExpression term : terms)
+            denoms.add(term.denom);
+
+        for (RationalExpression term : other.terms)
+            denoms.add(term.denom);
+
+        Polynomial f = Main.zero;
+
+        for (RationalExpression term : terms)
+        {
+            Polynomial temp = term.num;
+
+            for (Polynomial denom : denoms)
+                if (!denom.equals(term.denom))
+                    temp = temp.multiply(denom);
+
+            f = f.add(temp);
+        }
+
+        for (RationalExpression term : other.terms)
+        {
+            Polynomial temp = term.num;
+
+            for (Polynomial denom : denoms)
+                if (!denom.equals(term.denom))
+                    temp = temp.multiply(denom);
+
+            f = f.add(temp.multiply(new Rational(-1, 1)));
+        }
+
+        boolean fast = true;
+
+        for (Rational coefficient : f.coefficients)
+            fast &= coefficient.value() >= 0;
+
+        if (fast)
+            return true;
+
+        return f.geqZero();
+    }
+
+    @SuppressWarnings("Duplicates")
     int compare(RESum other)
     {
-//        boolean allG = true, allL = true;
-//
-//        for (double lambda = 1.01; lambda < 10; lambda *= 1.01)
-//        {
-//            double e1 = evaluate(lambda), e2 = other.evaluate(lambda);
-//            if (e1 > e2 + 0.001)
-//                allL = false;
-//            if (e1 < e2 - 0.001)
-//                allG = false;
-//        }
-//
-//        if (allG && allL)
-//            return 3;
-//        if (allG)
-//            return 0;
-//        if (allL)
-//            return 1;
-//        return 2;
-
         //construct a polynomial to compare to zero
 
         //find all denoms
@@ -154,7 +183,7 @@ class RESum
 
         for (RationalExpression term : terms)
         {
-            Polynomial temp = term.num.multiply(term.coeff);
+            Polynomial temp = term.num;
 
             for (Polynomial denom : denoms)
                 if (!denom.equals(term.denom))
@@ -165,7 +194,7 @@ class RESum
 
         for (RationalExpression term : other.terms)
         {
-            Polynomial temp = term.num.multiply(term.coeff);
+            Polynomial temp = term.num;
 
             for (Polynomial denom : denoms)
                 if (!denom.equals(term.denom))
@@ -203,25 +232,7 @@ class RESum
         {
             if (rE.num.equals(Main.zero))
                 continue;
-            temp += "\\frac{";
-            if (rE.coeff.p != 1)
-                temp += rE.coeff.p + "(" + rE.num.LaTeX() + ")}{";
-            else
-                temp += rE.num.LaTeX() + "}{";
-
-            if (rE.coeff.q != 1)
-                temp += rE.coeff.q + "(" + rE.denom.LaTeX() + ")}";
-            else
-                temp += rE.denom.LaTeX() + "}";
-            //                    if (!rE.coeff.toString().equals(""))
-            //                        if (rE.coeff.q == 1)
-            //                            temp += rE.coeff.p + " \\cdot ";
-            //                        else
-            //                            temp += "\\frac{" + rE.coeff.p + "}{" + rE.coeff.q + "} \\cdot ";
-            //
-            //                    if (rE.denom.degree != 0)
-            //                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "}";
-            temp += " + ";
+            temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "} + ";
         }
         if (temp.equals(""))
             temp = "0000";

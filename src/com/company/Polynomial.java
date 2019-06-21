@@ -8,8 +8,53 @@ class Polynomial
 {
     int degree = 0;
     ArrayList<Rational> coefficients = new ArrayList<>();
-    ArrayList<Polynomial> factors = new ArrayList<>();
-    private static final double err = 0.000001;
+    private static final double err = 0.00000001;
+
+    boolean geqZero()
+    {
+        if (degree == 0)
+            return coefficients.get(0).value() >= 0;
+
+        double domCoeff = 0;
+        boolean dominated = true;
+        for (int i = coefficients.size() - 1; i >= 0; i--)
+        {
+            domCoeff += coefficients.get(i).value();
+            if (domCoeff < -err)
+            {
+                dominated = false;
+                break;
+            }
+        }
+
+        if (dominated)
+            return true;
+
+        Complex[] roots = this.findRoots();
+        ArrayList<Double> realRoots = new ArrayList<>();
+
+        for (Complex root : roots)
+            if ((root.theta < 0.0001 || (2 * Math.PI - root.theta) < 0.0001) && root.r > 1) //if real root > 1
+                realRoots.add(root.r);
+
+        Collections.sort(realRoots);
+
+        if (realRoots.size() == 0)
+            return evaluate(2) >= -err;
+
+        if (evaluate((1 + realRoots.get(0)) / 2) < -err)
+            return false;
+
+        for (int i = 1; i < realRoots.size() - 1; i++)
+        {
+            if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < err)
+                continue;
+            if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -err)
+                return false;
+        }
+
+        return evaluate(2 * realRoots.get(realRoots.size() - 1)) >= -err;
+    }
 
     int compare()
     {
@@ -24,7 +69,6 @@ class Polynomial
         }
 
         Complex[] roots = this.findRoots();
-
         ArrayList<Double> realRoots = new ArrayList<>();
 
         for (Complex root : roots)
@@ -177,7 +221,6 @@ class Polynomial
 
     Polynomial()
     {
-        factors.add(this);
     }
 
     Polynomial(Polynomial f, Polynomial g)

@@ -7,18 +7,18 @@ import java.util.ArrayList;
 class RationalExpression
 {
     Polynomial num, denom;
-    Rational coeff = new Rational(1, 1);
+    //Rational coeff = new Rational(1, 1);
 
     BigDecimal evaluatePrecise(BigDecimal lambda)
     {
         if (denom.evaluatePrecise(lambda).compareTo(new BigDecimal(0)) == 0)
             System.out.println(denom);
-        return coeff.preciseValue().multiply(num.evaluatePrecise(lambda).divide(denom.evaluatePrecise(lambda), 50, RoundingMode.CEILING));
+        return num.evaluatePrecise(lambda).divide(denom.evaluatePrecise(lambda), 50, RoundingMode.CEILING);
     }
 
     double evaluate(double lambda)
     {
-        return coeff.p * num.evaluate(lambda) / (coeff.q * denom.evaluate(lambda));
+        return num.evaluate(lambda) / denom.evaluate(lambda);
     }
 
     RationalExpression()
@@ -48,33 +48,30 @@ class RationalExpression
             return null;
         }
 
-        Polynomial num1 = this.num.multiply(this.coeff);
-        Polynomial num2 = other.num.multiply(other.coeff);
+        Polynomial num1 = this.num.multiply(new Rational(1, 1));
+        Polynomial num2 = other.num.multiply(new Rational(1, 1));
         RationalExpression out = new RationalExpression();
         out.num = num1.add(num2);
         out.denom = denom.multiply(Main.one);
-        out.setCoefficient();
 
         return out;
     }
 
     RationalExpression divide(Polynomial p)
     {
-        RationalExpression rationalExpression = new RationalExpression(num.multiply(Main.one));
+        RationalExpression rationalExpression = new RationalExpression(num.multiply(new Rational(1, 1)));
         rationalExpression.denom = denom.multiply(p);
-        rationalExpression.coeff = coeff.multiply(new Rational(1, 1));
 
         return rationalExpression;
     }
 
     RationalExpression multiply(Rational r)
     {
-        Polynomial newNum = num.multiply(new Rational(r.p * coeff.p, 1));
-        Polynomial newDenom = denom.multiply(new Rational(r.q * coeff.q, 1));
+        Polynomial newNum = num.multiply(new Rational(r.p, 1));
+        Polynomial newDenom = denom.multiply(new Rational(r.q, 1));
         RationalExpression out = new RationalExpression();
         out.num = newNum;
         out.denom = newDenom;
-        out.setCoefficient();
 
         return out;
     }
@@ -82,88 +79,10 @@ class RationalExpression
     RationalExpression multiply(RationalExpression r)
     {
         RationalExpression out = this.multiply(new Rational(1, 1));
-        out.num = out.num.multiply(r.num).multiply(new Rational(r.coeff.p, 1));
-        out.denom = out.denom.multiply(r.denom).multiply(new Rational(r.coeff.q, 1));
-        out.setCoefficient();
+        out.num = out.num.multiply(r.num);
+        out.denom = out.denom.multiply(r.denom);
 
         return out;
-    }
-
-    void setCoefficient()
-    {
-        if (num.equals(Main.zero))
-        {
-            coeff = new Rational(0, 1);
-            return;
-        }
-
-        num = num.multiply(new Rational(coeff.p, 1));
-        denom = denom.multiply(new Rational(coeff.q, 1));
-        coeff = new Rational(1, 1);
-
-        ArrayList<Integer> numList = new ArrayList<>();
-        for (Rational rational : num.coefficients)
-            numList.add(rational.q);
-        int numLcm = lcm(numList, 1, 0);
-
-        num = num.multiply(new Rational(numLcm, 1));
-
-        ArrayList<Integer> denomList = new ArrayList<>();
-        for (Rational rational : denom.coefficients)
-            denomList.add(rational.q);
-        int denomLcm = lcm(denomList, 1, 0);
-
-        denom = denom.multiply(new Rational(denomLcm, 1));
-
-        coeff = new Rational(denomLcm, numLcm);
-
-        setCoefficient2();
-    }
-
-    void setCoefficient2()
-    {
-        ArrayList<Integer> numList = new ArrayList<>();
-        for (Rational rational : num.coefficients)
-            numList.add(rational.p);
-        int numGcd = gcd(numList, numList.get(0), 0);
-
-        num = num.multiply(new Rational(1, numGcd));
-
-        ArrayList<Integer> denomList = new ArrayList<>();
-        for (Rational rational : denom.coefficients)
-            denomList.add(rational.p);
-        int denomGcd = gcd(denomList, denomList.get(0), 0);
-
-        denom = denom.multiply(new Rational(1, denomGcd));
-
-        coeff = coeff.multiply(new Rational(numGcd, denomGcd));
-
-        setCoefficient3();
-    }
-
-    void setCoefficient3()
-    {
-        int nonzeroTerms = 0;
-        for (Rational coefficient : num.coefficients)
-            if (coefficient.p != 0)
-                nonzeroTerms++;
-
-        if (nonzeroTerms == 1)
-        {
-            num = num.multiply(new Rational(coeff.p, 1));
-            coeff.p = 1;
-        }
-
-        nonzeroTerms = 0;
-        for (Rational coefficient : denom.coefficients)
-            if (coefficient.p != 0)
-                nonzeroTerms++;
-
-        if (nonzeroTerms == 1)
-        {
-            denom = denom.multiply(new Rational(coeff.q, 1));
-            coeff.q = 1;
-        }
     }
 
     static int lcm(ArrayList<Integer> list, int n, int pos)
@@ -183,7 +102,6 @@ class RationalExpression
     @Override
     public String toString()
     {
-        setCoefficient();
-        return "" + coeff + "[" + num + "]/[" + denom + "]";
+        return "[" + num + "]/[" + denom + "]";
     }
 }
