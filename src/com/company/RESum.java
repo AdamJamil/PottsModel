@@ -134,10 +134,6 @@ class RESum
     @SuppressWarnings("Duplicates")
     boolean geq(RESum other)
     {
-        for (double lambda = 1.05; lambda <= 5; lambda *= 1.05)
-            if (evaluate(lambda) < other.evaluate(lambda) - 0.000001)
-                return false;
-
         HashSet<Polynomial> denoms = new HashSet<>();
 
         for (RationalExpression term : terms)
@@ -179,7 +175,8 @@ class RESum
         if (fast)
             return true;
 
-        return f.geqZero();
+        int temp = f.compare();
+        return (temp == 0 || temp == 3);
     }
 
     @SuppressWarnings("Duplicates")

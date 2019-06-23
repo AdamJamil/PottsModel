@@ -6,21 +6,65 @@ import java.util.Collections;
 
 class Polynomial
 {
-    int degree = 0;
     ArrayList<Rational> coefficients = new ArrayList<>();
-    private static final double err = 0.00000001;
+    private static final double err = 0.0001;
+    static ArrayList<Polynomial> pow;
+    static Rational minusOne = new Rational(-1, 1);
+
+    Polynomial quot(Polynomial divisor)
+    {
+        Polynomial quot = new Polynomial();
+        Polynomial rem = this.copy();
+        int d = divisor.coefficients.size() - 1;
+        Rational c = divisor.coefficients.get(d);
+
+        while (rem.coefficients.size() - 1 >= d)
+        {
+            Polynomial temp = pow.get(rem.coefficients.size() - 1 - d);
+            temp.multiply(new Rational(rem.coefficients.get(rem.coefficients.size() - 1).p * c.q,
+                    rem.coefficients.get(rem.coefficients.size() - 1).q * c.p));
+            quot.add(temp);
+            temp.multiply(divisor);
+            temp.multiply(minusOne);
+            rem.add(temp);
+        }
+
+        return quot;
+    }
+
+    Polynomial rem(Polynomial divisor)
+    {
+        Polynomial rem = this.copy();
+        int d = divisor.coefficients.size() - 1;
+        Rational c = divisor.coefficients.get(d);
+
+        while (rem.coefficients.size() - 1 >= d)
+        {
+            Polynomial temp = pow.get(rem.coefficients.size() - 1 - d);
+            temp.multiply(new Rational(rem.coefficients.get(rem.coefficients.size() - 1).p * c.q,
+                    rem.coefficients.get(rem.coefficients.size() - 1).q * c.p));
+            temp.multiply(divisor);
+            temp.multiply(minusOne);
+            rem.add(temp);
+        }
+
+        return rem;
+    }
 
     boolean geqZero()
     {
-        if (degree == 0)
+        if (coefficients.size() == 1)
             return coefficients.get(0).value() >= 0;
+
+        if (evaluate(1) < 0 || coefficients.get(coefficients.size() - 1).value() < 0)
+            return false;
 
         double domCoeff = 0;
         boolean dominated = true;
         for (int i = coefficients.size() - 1; i >= 0; i--)
         {
             domCoeff += coefficients.get(i).value();
-            if (domCoeff < -err)
+            if (domCoeff < err)
             {
                 dominated = false;
                 break;
@@ -30,35 +74,25 @@ class Polynomial
         if (dominated)
             return true;
 
-        Complex[] roots = this.findRoots();
-        ArrayList<Double> realRoots = new ArrayList<>();
+        ArrayList<Polynomial> P = new ArrayList<>();
+    }
 
-        for (Complex root : roots)
-            if ((root.theta < 0.0001 || (2 * Math.PI - root.theta) < 0.0001) && root.r > 1) //if real root > 1
-                realRoots.add(root.r);
-
-        Collections.sort(realRoots);
-
-        if (realRoots.size() == 0)
-            return evaluate(2) >= -err;
-
-        if (evaluate((1 + realRoots.get(0)) / 2) < -err)
-            return false;
-
-        for (int i = 1; i < realRoots.size() - 1; i++)
+    Polynomial derivative()
+    {
+        Polynomial out = new Polynomial();
+        for (int i = 1; i < coefficients.size(); i++)
         {
-            if (Math.abs(realRoots.get(i + 1) - realRoots.get(i)) < err)
-                continue;
-            if (evaluate((realRoots.get(i) + realRoots.get(i + 1)) / 2) < -err)
-                return false;
+            Rational temp = coefficients.get(i).copy();
+            temp.p *= i;
+            out.coefficients.add(temp);
         }
 
-        return evaluate(2 * realRoots.get(realRoots.size() - 1)) >= -err;
+        return out;
     }
 
     int compare()
     {
-        if (degree == 0)
+        if (coefficients.size() == 1)
         {
             if (coefficients.get(0).value() == 0)
                 return 3;
@@ -175,11 +209,6 @@ class Polynomial
                 coefficients.remove(i);
             else
                 break;
-
-        degree = coefficients.size() - 1;
-
-        if (degree == 1 && coefficients.get(0).p == 0 && coefficients.size() == 1)
-            degree = 0;
     }
 
     //looks BAD
@@ -187,10 +216,10 @@ class Polynomial
     {
         ArrayList<Rational> newCoefficients = new ArrayList<>();
 
-        for (int outDegree = 0; outDegree <= degree + other.degree; outDegree++)
+        for (int outDegree = 0; outDegree <= coefficients.size() + coefficients.size() - 2; outDegree++)
         {
             Rational current = new Rational();
-            for (int firstDegree = Math.max(0, outDegree - other.degree); firstDegree <= Math.min(outDegree, degree); firstDegree++)
+            for (int firstDegree = Math.max(0, outDegree - other.coefficients.size() - 1); firstDegree <= Math.min(outDegree, coefficients.size() - 1); firstDegree++)
             {
                 Rational temp = coefficients.get(firstDegree).copy();
                 temp.multiply(other.coefficients.get(outDegree - firstDegree));
@@ -206,11 +235,6 @@ class Polynomial
                 coefficients.remove(i);
             else
                 break;
-
-        degree = coefficients.size() - 1;
-
-        if (degree == 1 && coefficients.get(0).p == 0 && coefficients.size() == 1)
-            degree = 0;
     }
 
     //looks good
@@ -220,7 +244,6 @@ class Polynomial
         {
             coefficients.clear();
             coefficients.add(new Rational(0, 1));
-            degree = 0;
             return;
         }
 
@@ -233,7 +256,7 @@ class Polynomial
         Polynomial out = new Polynomial();
         for (Rational rational : coefficients)
             out.coefficients.add(new Rational(rational.p, rational.q));
-        out.degree = degree;
+
         return out;
     }
 
@@ -243,7 +266,7 @@ class Polynomial
     {
         StringBuilder sb = new StringBuilder();
 
-        if (degree == 0)
+        if (coefficients.size() == 1)
         {
             if (coefficients.get(0).q == 1)
                 return "" + coefficients.get(0).p;
@@ -279,7 +302,7 @@ class Polynomial
     {
         StringBuilder sb = new StringBuilder();
 
-        if (degree == 0)
+        if (coefficients.size() == 1)
         {
             if (coefficients.get(0).q == 1)
                 return "" + coefficients.get(0).p;
@@ -321,7 +344,7 @@ class Polynomial
     @Override
     public boolean equals(Object obj)
     {
-        if (degree != ((Polynomial) obj).degree)
+        if (coefficients.size() != ((Polynomial) obj).coefficients.size())
             return false;
 
         for (int i = 0; i < coefficients.size(); i++)
@@ -349,6 +372,7 @@ class Polynomial
 
     Complex[] findRoots()
     {
+        int degree = coefficients.size() - 1;
         Complex[] roots = new Complex[degree];
 
         Complex mult = new Complex(0.984886, 1.152571805);

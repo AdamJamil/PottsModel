@@ -2,7 +2,6 @@ package com.company;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 
 class RationalExpression
 {
@@ -33,10 +32,8 @@ class RationalExpression
     RationalExpression()
     {
         denom = new Polynomial();
-        denom.degree = 0;
         denom.coefficients.add(new Rational(1, 1));
         num = new Polynomial();
-        num.degree = 0;
         num.coefficients.add(new Rational());
     }
 
@@ -44,7 +41,6 @@ class RationalExpression
     {
         num = p.copy();
         denom = new Polynomial();
-        denom.degree = 0;
         denom.coefficients.add(new Rational(1, 1));
     }
 

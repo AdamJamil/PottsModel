@@ -40,8 +40,8 @@ class Driver
         arrows.add(new Arrow(" does (nothing)", new int[]{0, 0, 0}));
 
         tm = new TransitionMatrix();
+        initializePow();
         initializeProbArr();
-
         partialOrder = guessAndInitPartialOrder();
         fixPartialOrder();
         partialOrders.add(partialOrder);
@@ -54,7 +54,7 @@ class Driver
 //            {
 //                System.out.println(map.get(reSum).get(sum) + ": " + reSum + ",   " + sum);
 //            }
-//        }
+//
     }
 
     void fixPartialOrder()
@@ -74,7 +74,7 @@ class Driver
             {
                 int idx = -1;
                 for (int j = 0; j < blacklist.length; j++)
-                    if (blacklist[i][j])
+                    if (blacklist[i][j])// && !states.get(i).geq(states.get(j)))
                         partialOrder[i][idx = j] = false;
                 good &= idx == -1;
             }
@@ -103,7 +103,7 @@ class Driver
 
             for (Arrow arrow : arrows)
                 if (arrow.valid(s1))
-                    tm.arr[i][states.indexOf(arrow.map(s1))] = tm.map.get(states.get(i)).get(arrow.map(s1));
+                    tm.arr[i][states.indexOf(arrow.map(s1))] = tm.map.get(states.get(i)).get(arrow.map(s1)).copy();
         }
 
         for (RESum[] reSums : tm.arr)
@@ -173,7 +173,7 @@ class Driver
 
         for (int i = 0; i < geq.length; i++)
             for (int j = 0; j < geq.length; j++)
-                geq[i][j] = true; //tm.states.get(i).geq(tm.states.get(j));
+                geq[i][j] = true;//states.get(i).geq(states.get(j));
 
         for (double lambda = 1.01; lambda < 100; lambda *= 1.01)
         {
@@ -189,6 +189,7 @@ class Driver
                         geq[i][j] &= arr[i][0] >= arr[j][0];
             }
         }
+
         return geq;
     }
 
@@ -246,12 +247,6 @@ class Driver
 
     void oneStepCoupling(boolean[][] partialOrder)
     {
-        bs1 = new ArrayList<>();
-        bs2 = new ArrayList<>();
-        p1 = new ArrayList<>();
-        p2 = new ArrayList<>();
-        bu = new ArrayList<>();
-
         blacklist = new boolean[partialOrder.length][partialOrder.length];
 
         long time = System.nanoTime();
@@ -564,5 +559,18 @@ class Driver
         }
 
         return partitions(out, pos + 1);
+    }
+
+    void initializePow()
+    {
+        Polynomial.pow = new ArrayList<>();
+        Polynomial.pow.add(Main.one.copy());
+
+        for (int i = 1; i <= 100; i++)
+        {
+            Polynomial temp = Polynomial.pow.get(i - 1);
+            temp.multiply(Main.x);
+            Polynomial.pow.add(temp);
+        }
     }
 }
