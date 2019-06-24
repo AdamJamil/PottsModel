@@ -568,7 +568,7 @@ class Driver
 
         for (int i = 1; i <= 100; i++)
         {
-            Polynomial temp = Polynomial.pow.get(i - 1);
+            Polynomial temp = Polynomial.pow.get(i - 1).copy();
             temp.multiply(Main.x);
             Polynomial.pow.add(temp);
         }

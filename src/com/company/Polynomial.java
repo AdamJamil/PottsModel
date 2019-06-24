@@ -11,8 +11,160 @@ class Polynomial
     static ArrayList<Polynomial> pow;
     static Rational minusOne = new Rational(-1, 1);
 
+    boolean geqZero()
+    {
+        if (coefficients.size() == 1)
+            return coefficients.get(0).value() >= 0;
+
+        if (coefficients.get(coefficients.size() - 1).value() < 0 || evaluateOne() < 0)
+            return false;
+
+        double domCoeff = 0;
+        boolean dominated = true;
+        for (int i = coefficients.size() - 1; i >= 0; i--)
+        {
+            domCoeff += coefficients.get(i).value();
+            if (domCoeff < err)
+            {
+                dominated = false;
+                break;
+            }
+        }
+
+        if (dominated)
+            return true;
+
+        Polynomial O = removeEvenRoots(), Oprime = O.copy();
+        Oprime.differentiate();
+        System.out.println("yee");
+        O = O.quot(gcd(O, Oprime));
+        System.out.println("haw");
+
+        Polynomial[] P = new Polynomial[coefficients.size()];
+        P[0] = O;
+        P[1] = O.copy();
+        P[1].differentiate();
+
+        System.out.println("???");
+
+        int i = 1;
+
+        while (P[i].coefficients.size() > 1)
+        {
+            P[i + 1] = P[i - 1].rem(P[i]);
+            P[i + 1].multiply(new Rational(-1, 1));
+            i++;
+        }
+
+        ArrayList<Double> A = new ArrayList<>(i + 1), B = new ArrayList<>(i + 1);
+
+        for (Polynomial polynomial : P)
+            if (polynomial == null)
+                break;
+            else
+            {
+                double temp;
+                if ((temp = polynomial.evaluateOne()) != 0)
+                    A.add(temp);
+                if ((temp = polynomial.coefficients.get(polynomial.coefficients.size() - 1).value()) != 0)
+                    B.add(temp);
+            }
+
+        int count = 0;
+
+        for (int j = 0; j < A.size() - 1; j++)
+            if (A.get(j) * A.get(j + 1) < 0)
+                count++;
+
+        for (int j = 0; j < B.size() - 1; j++)
+            if (B.get(j) * B.get(j + 1) < 0)
+                count--;
+
+        return count <= 0;
+    }
+
+    Polynomial removeEvenRoots()
+    {
+        Polynomial out = this.copy(), P_i = this.copy();
+
+        P_i.differentiate(); //i = 1
+        Polynomial Q_i = gcd(this, P_i); //i = 1
+        P_i.differentiate(); //i = 2
+        Q_i = gcd(Q_i, P_i); //i = 2
+
+        int i = 0;
+        while (Q_i.coefficients.size() > 1)
+        {
+            i += 2;
+
+            Polynomial temp = Q_i.copy();
+            temp.differentiate(); //temp = Q_i'
+            temp = gcd(Q_i, temp); //temp = gcd(Q_i, Q_i')
+            temp = Q_i.quot(temp); //temp = R
+            temp = pow(temp, i); //temp = R^i
+
+            out = out.quot(temp); //P = P / R^i
+
+
+            P_i.differentiate(); //i +1
+            Q_i = gcd(Q_i, P_i); //i +1
+            P_i.differentiate(); //i +2
+            Q_i = gcd(Q_i, P_i); //i +2
+        }
+
+        return out;
+    }
+
+    static Polynomial pow(Polynomial base, int pow)
+    {
+        if (pow == 1)
+            return base.copy();
+        if (pow == 2)
+        {
+            Polynomial out = base.copy();
+            out.multiply(base);
+            return out;
+        }
+
+        Polynomial out = pow(base, pow / 2);
+        out.multiply(out);
+
+        if (pow % 2 == 1)
+            out.multiply(base);
+
+        return out;
+    }
+
+    static Polynomial gcd(Polynomial a, Polynomial b)
+    {
+        if (a.coefficients.size() == 1 || b.coefficients.size() == 1)
+        {
+            Polynomial out = new Polynomial();
+            out.coefficients.add(new Rational(1, 1));
+            return out;
+        }
+
+        Polynomial temp;
+        while (b.coefficients.size() > 1 || b.coefficients.get(0).value() > 0)
+        {
+            System.out.println(b);
+            temp = a.rem(b);
+            a = b;
+            b = temp;
+        }
+
+        return a;
+    }
+
     Polynomial quot(Polynomial divisor)
     {
+        if (divisor.coefficients.size() == 1)
+        {
+            Polynomial quot = copy();
+            quot.multiply(new Rational(divisor.coefficients.get(0).q, divisor.coefficients.get(0).p));
+            return quot;
+        }
+
         Polynomial quot = new Polynomial();
         Polynomial rem = this.copy();
         int d = divisor.coefficients.size() - 1;
@@ -51,43 +203,12 @@ class Polynomial
         return rem;
     }
 
-    boolean geqZero()
+    void differentiate()
     {
-        if (coefficients.size() == 1)
-            return coefficients.get(0).value() >= 0;
-
-        if (evaluate(1) < 0 || coefficients.get(coefficients.size() - 1).value() < 0)
-            return false;
-
-        double domCoeff = 0;
-        boolean dominated = true;
-        for (int i = coefficients.size() - 1; i >= 0; i--)
-        {
-            domCoeff += coefficients.get(i).value();
-            if (domCoeff < err)
-            {
-                dominated = false;
-                break;
-            }
-        }
-
-        if (dominated)
-            return true;
-
-        ArrayList<Polynomial> P = new ArrayList<>();
-    }
-
-    Polynomial derivative()
-    {
-        Polynomial out = new Polynomial();
         for (int i = 1; i < coefficients.size(); i++)
-        {
-            Rational temp = coefficients.get(i).copy();
-            temp.p *= i;
-            out.coefficients.add(temp);
-        }
+            coefficients.set(i - 1, new Rational(i * coefficients.get(i).p, coefficients.get(i).q));
 
-        return out;
+        coefficients.remove(coefficients.size() - 1);
     }
 
     int compare()
@@ -188,6 +309,14 @@ class Polynomial
         return result;
     }
 
+    double evaluateOne()
+    {
+        double sum = 0;
+        for (Rational coefficient : coefficients)
+            sum += coefficient.value();
+        return sum;
+    }
+
     //looks good
     void add(Polynomial other)
     {
@@ -216,10 +345,10 @@ class Polynomial
     {
         ArrayList<Rational> newCoefficients = new ArrayList<>();
 
-        for (int outDegree = 0; outDegree <= coefficients.size() + coefficients.size() - 2; outDegree++)
+        for (int outDegree = 0; outDegree <= coefficients.size() + other.coefficients.size() - 2; outDegree++)
         {
             Rational current = new Rational();
-            for (int firstDegree = Math.max(0, outDegree - other.coefficients.size() - 1); firstDegree <= Math.min(outDegree, coefficients.size() - 1); firstDegree++)
+            for (int firstDegree = Math.max(0, outDegree - other.coefficients.size() + 1); firstDegree <= Math.min(outDegree, coefficients.size() - 1); firstDegree++)
             {
                 Rational temp = coefficients.get(firstDegree).copy();
                 temp.multiply(other.coefficients.get(outDegree - firstDegree));

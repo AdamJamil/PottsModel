@@ -175,8 +175,7 @@ class RESum
         if (fast)
             return true;
 
-        int temp = f.compare();
-        return (temp == 0 || temp == 3);
+        return f.geqZero();
     }
 
     @SuppressWarnings("Duplicates")

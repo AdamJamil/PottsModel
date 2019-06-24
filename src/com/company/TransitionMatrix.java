@@ -135,7 +135,6 @@ class TransitionMatrix
         Main.one = new Polynomial();
         Main.one.coefficients.add(new Rational(1, 1));
         Main.x = new Polynomial();
-        Main.x.degree = 1;
         Main.x.coefficients.add(new Rational(0, 1));
         Main.x.coefficients.add(new Rational(1, 1));
         Main.sumZero = new RESum();

@@ -13,13 +13,13 @@ public class Main extends Application
     static Polynomial zero, one, x;
     static RESum sumZero, sumOne;
     static boolean printTM = false;
-    static boolean tonyMode = true;
-    static int n = 6;
+    static boolean tonyMode = false;
+    static int n = 2;
     static Driver d;
 
     static boolean drawUpsets = false, drawBadCases = false, drawPartialOrdering = true;
 
-    public Main()
+    public Main() throws Exception
     {
         d = new Driver();
     }
