@@ -186,7 +186,7 @@ class Driver
 
         for (int i = 0; i < geq.length; i++)
             for (int j = 0; j < geq.length; j++)
-                geq[i][j] = true;//states.get(i).geq(states.get(j));
+                geq[i][j] = states.get(i).geq(states.get(j));
 
         for (double lambda = 1.01; lambda < 100; lambda *= 1.01)
         {
