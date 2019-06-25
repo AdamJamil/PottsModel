@@ -15,11 +15,12 @@ class Driver
 
     static ArrayList<State> states;
     static ArrayList<Arrow> arrows = new ArrayList<>();
+    static int[][] neighbors;
 
     //stores all the information regarding "bad cases" (ie the upset criteria doesn't work)
     ArrayList<State> bs1, bs2;
     ArrayList<RESum> p1, p2;
-    ArrayList<HashSet<State>> bu;
+    ArrayList<boolean[]> bu;
 
     ArrayList<boolean[]> upsets;
     HashMap<HashSet<State>, HashSet<State>> generators = new HashMap<>();
@@ -28,6 +29,8 @@ class Driver
     boolean[][] minUpset;
     boolean[][] blacklist;
     ArrayList<boolean[][]> partialOrders = new ArrayList<>();
+
+    private static final double err = 0.00000000001;
 
     Driver()
     {
@@ -40,13 +43,23 @@ class Driver
         arrows.add(new Arrow(" does (nothing)", new int[]{0, 0, 0}));
 
         tm = new TransitionMatrix();
+        initializeNeighbors();
         initializePow();
         initializeProbArr();
         partialOrder = guessAndInitPartialOrder();
+//        initializeMinUpset(partialOrder);
+//        findUpsets(partialOrder);
+//        oneStepCoupling(partialOrder);
         fixPartialOrder();
         partialOrders.add(partialOrder);
         checkTransitivity();
         printMinPartialOrder(partialOrder);
+//        for (boolean[] booleans : partialOrder)
+//        {
+//            for (boolean aBoolean : booleans)
+//                System.out.print(aBoolean);
+//            System.out.println();
+//        }
 
 //        for (RESum reSum : map.keySet())
 //        {
@@ -179,14 +192,14 @@ class Driver
         {
             double[][] arr = tm.evaluate(lambda), temp = new double[arr.length][arr.length];
             for (int i = 0; i < arr.length; i++)
-                System.arraycopy(arr[i], 0, temp[i], 0, arr.length);
+                System.arraycopy(arr[i], 0, temp[i], 0, arr[i].length);
             for (int pow = 0; pow < 100; pow++)
             {
                 arr = multiply(arr, temp);
 
                 for (int i = 0; i < geq.length; i++)
                     for (int j = 0; j < geq.length; j++)
-                        geq[i][j] &= arr[i][0] >= arr[j][0];
+                        geq[i][j] &= arr[i][0] + err >= arr[j][0];
             }
         }
 
@@ -243,8 +256,12 @@ class Driver
         generateAntichains(other, otherAllowed);
     }
 
-    HashMap<RESum, HashMap<RESum, Boolean>> map = new HashMap<>();
+    //maps from pair of (state|neighbors) (format 32-7|7) to result of comparison
+    HashMap<Integer, Boolean> result = new HashMap<>();
+    //maps from (state|neighbors) to RESum of probability of going into upset
+    HashMap<Integer, RESum> probability = new HashMap<>();
 
+    @SuppressWarnings("Duplicates")
     void oneStepCoupling(boolean[][] partialOrder)
     {
         blacklist = new boolean[partialOrder.length][partialOrder.length];
@@ -252,96 +269,128 @@ class Driver
         long time = System.nanoTime();
         System.out.println("sakusen kaishi!");
 
+        ArrayList<Integer>[] checklist = new ArrayList[states.size()];
+
         for (int i = 0; i < partialOrder.length; i++)
-            outer: for (int j = 0; j < partialOrder.length; j++)
-                if (i != j && partialOrder[i][j])
-                    for (boolean[] upset : upsets)
-                    {
-                        RESum p1 = sumZero.copy();
-                        RESum p2 = sumZero.copy();
-
-                        for (int k = 0; k < upset.length; k++)
-                            if (upset[k])
-                            {
-                                if (tm.arr[i][k] != null)
-                                    p1.add(tm.arr[i][k]);
-
-                                if (tm.arr[j][k] != null)
-                                    p2.add(tm.arr[j][k]);
-                            }
-
-                        boolean temp;
-
-                        if (map.containsKey(p1) && map.get(p1).containsKey(p2))
-                            temp = map.get(p1).get(p2);
-                        else
-                        {
-                            //System.out.println(p1 + "  " + p2);
-                            temp = p1.geq(p2);
-                            if (!map.containsKey(p1))
-                                map.put(p1, new HashMap<>());
-                            map.get(p1).put(p2, temp);
-                        }
-
-                        if (!temp)
-                        {
-                            blacklist[i][j] = true;
-                            continue outer;
-                        }
-                    }
-
-        System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
-    }
-
-    void twoStepCoupling()
-    {
-        HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
-
-        long time = System.nanoTime();
-        System.out.println("sakusen kaishi! dainimaku!!!");
-
-        for (int i = 0; i < bs1.size(); i++)
         {
-            State s1 = bs1.get(i), s2 = bs2.get(i);
-            HashSet<State> upset = bu.get(i);
-
-            RESum p1 = sumZero.copy();
-            RESum p2 = sumZero.copy();
-
-            for (State target : upset)
-            {
-                p1.add(tm.map2.get(s1).get(target));
-                p2.add(tm.map2.get(s2).get(target));
-            }
-
-            int temp;
-
-            if (map.containsKey(p1) && map.get(p1).containsKey(p2))
-                temp = map.get(p1).get(p2);
-            else
-            {
-                //System.out.println(p1 + "  " + p2);
-                temp = p1.compare(p2);
-                if (!map.containsKey(p1))
-                    map.put(p1, new HashMap<>());
-                map.get(p1).put(p2, temp);
-            }
-
-            if (temp == 2 || temp == 1)
-            {
-                System.out.println("yikes!");
-                System.out.println(p1);
-                System.out.println(p2);
-//                bs1.add(s1);
-//                bs2.add(s2);
-//                bu.add(upset);
-//                p1.add(p1);
-//                p2.add(p2);
-            }
+            checklist[i] = new ArrayList<>(partialOrder.length);
+            for (int j = 0; j < partialOrder.length; j++)
+                if (i != j && partialOrder[i][j])
+                    checklist[i].add(j);
         }
 
+        for (boolean[] upset : upsets)
+            for (int i = 0; i < partialOrder.length; i++)
+            {
+                int key1 = i << 7;
+                for (int j = 0; j < neighbors[i].length; j++)
+                    if (upset[neighbors[i][j]])
+                        key1 += (1 << j);
+
+                outer:
+                for (int w = checklist[i].size() - 1; w >= 0; w--)
+                {
+                    int j = checklist[i].get(w);
+
+                    int key2 = j << 7;
+                    for (int k = 0; k < neighbors[j].length; k++)
+                        if (upset[neighbors[j][k]])
+                            key2 += (1 << k);
+
+                    boolean temp;
+                    int key = (key1 << 16) + key2;
+
+                    if (result.containsKey(key))
+                        temp = result.get(key);
+                    else
+                    {
+                        RESum p1, p2;
+
+                        if (probability.containsKey(key1))
+                            p1 = probability.get(key1);
+                        else
+                        {
+                            p1 = new RESum();
+                            for (int k = 0; k < 7; k++)
+                                if ((key1 & (1 << k)) != 0)
+                                    p1.add(tm.arr[i][neighbors[i][k]]);
+                            probability.put(key1, p1);
+                        }
+
+                        if (probability.containsKey(key2))
+                            p2 = probability.get(key2);
+                        else
+                        {
+                            p2 = new RESum();
+                            for (int k = 0; k < 7; k++)
+                                if ((key2 & (1 << k)) != 0)
+                                    p2.add(tm.arr[j][neighbors[j][k]]);
+                            probability.put(key2, p2);
+                        }
+
+                        result.put(key, temp = p1.geq(p2));
+                    }
+
+                    if (!temp)
+                    {
+                        blacklist[i][j] = true;
+                        checklist[i].remove(w);
+                    }
+                }
+            }
+
         System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
     }
+
+//    void twoStepCoupling()
+//    {
+//        HashMap<RESum, HashMap<RESum, Integer>> map = new HashMap<>();
+//
+//        long time = System.nanoTime();
+//        System.out.println("sakusen kaishi! dainimaku!!!");
+//
+//        for (int i = 0; i < bs1.size(); i++)
+//        {
+//            State s1 = bs1.get(i), s2 = bs2.get(i);
+//            boolean[] upset = bu.get(i);
+//
+//            RESum p1 = sumZero.copy();
+//            RESum p2 = sumZero.copy();
+//
+//            for (State target : upset)
+//            {
+//                p1.add(tm.map2.get(s1).get(target));
+//                p2.add(tm.map2.get(s2).get(target));
+//            }
+//
+//            int temp;
+//
+//            if (map.containsKey(p1) && map.get(p1).containsKey(p2))
+//                temp = map.get(p1).get(p2);
+//            else
+//            {
+//                //System.out.println(p1 + "  " + p2);
+//                temp = p1.compare(p2);
+//                if (!map.containsKey(p1))
+//                    map.put(p1, new HashMap<>());
+//                map.get(p1).put(p2, temp);
+//            }
+//
+//            if (temp == 2 || temp == 1)
+//            {
+//                System.out.println("yikes!");
+//                System.out.println(p1);
+//                System.out.println(p2);
+////                bs1.add(s1);
+////                bs2.add(s2);
+////                bu.add(upset);
+////                p1.add(p1);
+////                p2.add(p2);
+//            }
+//        }
+//
+//        System.out.println(((double) (System.nanoTime() - time)) / 1000000000 + "s");
+//    }
 
     boolean equal(HashSet<State> set1, HashSet<State> set2)
     {
@@ -361,7 +410,7 @@ class Driver
 
         for (int i = 0; i < partialOrder.length; i++)
             for (int j = 0; j < partialOrder.length; j++)
-                    minUpset[j][i] = partialOrder[i][j];
+                minUpset[j][i] = partialOrder[i][j];
     }
 
     ArrayList<HashSet<State>> powerSet(HashSet<State> set)
@@ -571,6 +620,23 @@ class Driver
             Polynomial temp = Polynomial.pow.get(i - 1).copy();
             temp.multiply(Main.x);
             Polynomial.pow.add(temp);
+        }
+    }
+
+    void initializeNeighbors()
+    {
+        neighbors = new int[states.size()][];
+
+        for (int i = 0; i < states.size(); i++)
+        {
+            ArrayList<Integer> temp = new ArrayList<>();
+            for (int j = 0; j < arrows.size(); j++)
+                if (arrows.get(j).valid(states.get(i)))
+                    temp.add(j);
+
+            neighbors[i] = new int[temp.size()];
+            for (int j = 0; j < neighbors[i].length; j++)
+                neighbors[i][j] = states.indexOf(arrows.get(temp.get(j)).map(states.get(i)));
         }
     }
 }

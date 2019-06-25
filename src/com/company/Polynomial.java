@@ -7,7 +7,7 @@ import java.util.Collections;
 class Polynomial
 {
     ArrayList<Rational> coefficients = new ArrayList<>();
-    private static final double err = 0.0001;
+    private static final double err = 0.0000000001;
     static ArrayList<Polynomial> pow;
     static Rational minusOne = new Rational(-1, 1);
 
@@ -16,7 +16,7 @@ class Polynomial
         if (coefficients.size() == 1)
             return coefficients.get(0).value() >= 0;
 
-        if (coefficients.get(coefficients.size() - 1).value() < 0 || evaluateOne() < 0)
+        if (coefficients.get(coefficients.size() - 1).value() < -err || evaluateOne() < -err)
             return false;
 
         double domCoeff = 0;
@@ -34,53 +34,99 @@ class Polynomial
         if (dominated)
             return true;
 
-        Polynomial O = removeEvenRoots(), Oprime = O.copy();
-        Oprime.differentiate();
-        System.out.println("yee");
-        O = O.quot(gcd(O, Oprime));
-        System.out.println("haw");
+        if (evaluate(1.6) < -err || evaluate(2) < -err)
+            return false;
 
-        Polynomial[] P = new Polynomial[coefficients.size()];
-        P[0] = O;
-        P[1] = O.copy();
-        P[1].differentiate();
+        Polynomial taylor = new Polynomial();
+        taylor.coefficients.clear();
+        Polynomial temp = this.copy();
 
-        System.out.println("???");
-
-        int i = 1;
-
-        while (P[i].coefficients.size() > 1)
+        for (int i = 0; i < coefficients.size(); i++)
         {
-            P[i + 1] = P[i - 1].rem(P[i]);
-            P[i + 1].multiply(new Rational(-1, 1));
-            i++;
+            Rational tempRat = new Rational(0, 1);
+            for (Rational coefficient : temp.coefficients)
+                tempRat.add(coefficient);
+            taylor.coefficients.add(tempRat);
+            temp.multiply(new Rational(1, i + 1));
+            temp.differentiate();
+            for (Rational coefficient : temp.coefficients)
+                coefficient.simplify();
         }
 
-        ArrayList<Double> A = new ArrayList<>(i + 1), B = new ArrayList<>(i + 1);
-
-        for (Polynomial polynomial : P)
-            if (polynomial == null)
-                break;
-            else
+        domCoeff = 0;
+        dominated = true;
+        for (int i = taylor.coefficients.size() - 1; i >= 0; i--)
+        {
+            domCoeff += taylor.coefficients.get(i).value();
+            if (domCoeff < err)
             {
-                double temp;
-                if ((temp = polynomial.evaluateOne()) != 0)
-                    A.add(temp);
-                if ((temp = polynomial.coefficients.get(polynomial.coefficients.size() - 1).value()) != 0)
-                    B.add(temp);
+                dominated = false;
+                break;
             }
+        }
 
-        int count = 0;
+        if (dominated)
+            return true;
 
-        for (int j = 0; j < A.size() - 1; j++)
-            if (A.get(j) * A.get(j + 1) < 0)
-                count++;
+        System.out.println(this);
+        //System.out.println(taylor.toString().replaceAll("x", "(x-1)"));
 
-        for (int j = 0; j < B.size() - 1; j++)
-            if (B.get(j) * B.get(j + 1) < 0)
-                count--;
+//        Polynomial O = removeEvenRoots(), Oprime = O.copy();
+//        Oprime.differentiate();
+//        O = O.quot(gcd(O, Oprime));
+//
+//        System.out.println("it's bad time");
+//
+//        Polynomial[] P = new Polynomial[coefficients.size()];
+//        P[0] = O;
+//        P[1] = O.copy();
+//        P[1].differentiate();
+//
+//        int i = 1;
+//
+////        Rational[] gamma = new Rational[P.length], beta = new Rational[P.length], phi = new Rational[P.length];
+////        int[] d = new int[P.length];
+////
+////        d[1] = P[0].coefficients.size() - P[1].coefficients.size();
+////        beta[1] = Rational.pow(minusOne, d[1] + 1);
+////        phi[1] = minusOne.copy();
+//
+//        while (P[i].coefficients.size() > 1)
+//        {
+//            P[i + 1] = P[i - 1].rem(P[i]);
+//            P[i + 1].multiply(new Rational(-1, 1));
+////            P[i + 1] = P[i - 1].copy();
+////            P[i + 1].multiply(Rational.pow(gamma[i], d[i] + 1));
+//            i++;
+//        }
+//
+//        ArrayList<Double> A = new ArrayList<>(i + 1), B = new ArrayList<>(i + 1);
+//
+//        for (Polynomial polynomial : P)
+//            if (polynomial == null)
+//                break;
+//            else
+//            {
+//                double temp;
+//                if ((temp = polynomial.evaluateOne()) != 0)
+//                    A.add(temp);
+//                if ((temp = polynomial.coefficients.get(polynomial.coefficients.size() - 1).value()) != 0)
+//                    B.add(temp);
+//            }
+//
+//        int count = 0;
+//
+//        for (int j = 0; j < A.size() - 1; j++)
+//            if (A.get(j) * A.get(j + 1) < 0)
+//                count++;
+//
+//        for (int j = 0; j < B.size() - 1; j++)
+//            if (B.get(j) * B.get(j + 1) < 0)
+//                count--;
+//
+//        return count <= 0;
 
-        return count <= 0;
+        return false;
     }
 
     Polynomial removeEvenRoots()
@@ -144,10 +190,30 @@ class Polynomial
             return out;
         }
 
+        a = a.copy();
+        b = b.copy();
+
         Polynomial temp;
-        while (b.coefficients.size() > 1 || b.coefficients.get(0).value() > 0)
+        while (b.coefficients.size() > 1 || b.coefficients.get(0).value() != 0)
         {
-            System.out.println(b);
+            Rational lca = a.coefficients.get(a.coefficients.size() - 1);
+            if (!(lca.p == 1 && lca.q == 1))
+            {
+                a.multiply(new Rational(lca.q, lca.p));
+                for (Rational coeff : a.coefficients)
+                    coeff.simplify();
+            }
+            Rational lcb = b.coefficients.get(b.coefficients.size() - 1);
+            if (!(lcb.p == 1 && lcb.q == 1))
+            {
+                b.multiply(new Rational(lcb.q, lcb.p));
+                for (Rational coeff : b.coefficients)
+                    coeff.simplify();
+            }
+
+//            System.out.println();
+//            System.out.println(a);
+//            System.out.println(b);
             temp = a.rem(b);
             a = b;
             b = temp;
@@ -172,7 +238,7 @@ class Polynomial
 
         while (rem.coefficients.size() - 1 >= d)
         {
-            Polynomial temp = pow.get(rem.coefficients.size() - 1 - d);
+            Polynomial temp = pow.get(rem.coefficients.size() - 1 - d).copy();
             temp.multiply(new Rational(rem.coefficients.get(rem.coefficients.size() - 1).p * c.q,
                     rem.coefficients.get(rem.coefficients.size() - 1).q * c.p));
             quot.add(temp);
@@ -184,15 +250,27 @@ class Polynomial
         return quot;
     }
 
+
+    int count;
     Polynomial rem(Polynomial divisor)
     {
+//        System.out.println("\n" + this + " remainder " + divisor);
+        if (divisor.coefficients.size() == 1)
+            return Main.zero.copy();
+
         Polynomial rem = this.copy();
         int d = divisor.coefficients.size() - 1;
         Rational c = divisor.coefficients.get(d);
 
+        count = 0;
         while (rem.coefficients.size() - 1 >= d)
         {
-            Polynomial temp = pow.get(rem.coefficients.size() - 1 - d);
+            count++;
+            if (count > 15)
+                throw new RuntimeException(">:(");
+//            System.out.println(rem);
+//            System.out.println(divisor);
+            Polynomial temp = pow.get(rem.coefficients.size() - 1 - d).copy();
             temp.multiply(new Rational(rem.coefficients.get(rem.coefficients.size() - 1).p * c.q,
                     rem.coefficients.get(rem.coefficients.size() - 1).q * c.p));
             temp.multiply(divisor);
@@ -317,7 +395,6 @@ class Polynomial
         return sum;
     }
 
-    //looks good
     void add(Polynomial other)
     {
         for (int i = 0; i < Math.max(coefficients.size(), other.coefficients.size()); i++)
@@ -415,7 +492,12 @@ class Polynomial
         }
 
         if (coefficients.get(0).p != 0)
-            return sb.toString() + coefficients.get(0).p;
+        {
+            if (coefficients.get(0).q == 1)
+                return sb.toString() + coefficients.get(0).p;
+            else
+                return sb.toString() + "(" + coefficients.get(0).p + "/" + coefficients.get(0).q + ")";
+        }
         else
             return sb.toString().substring(0, sb.toString().length() - 1);
 
@@ -467,7 +549,7 @@ class Polynomial
         Rational sum = new Rational();
         for (Rational coefficient : coefficients)
             sum.add(coefficient);
-        return sum.p - sum.q;
+        return (int) (sum.p - sum.q);
     }
 
     @Override

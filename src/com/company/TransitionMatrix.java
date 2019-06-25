@@ -205,30 +205,33 @@ class TransitionMatrix
         //printBS(states);
 
         if (Main.printTM)
+            print();
+    }
+
+    void print()
+    {
+        String s = " ";
+        for (State state : states)
+            s += " & " + state.toString().replace("†", "\\dagger");
+
+        for (State s1 : states)
         {
-            String s = " ";
-            for (State state : states)
-                s += " & " + state.toString().replace("†", "\\dagger");
-
-            for (State s1 : states)
+            s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
+            for (State s2 : states)
             {
-                s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
-                for (State s2 : states)
+                String temp = "";
+                for (RationalExpression rE : map.get(s1).get(s2).terms)
                 {
-                    String temp = "";
-                    for (RationalExpression rE : map.get(s1).get(s2).terms)
-                    {
-                        if (rE.num.equals(Main.zero))
-                            continue;
-                        temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "} + ";
-                    }
-                    if (temp.equals(""))
-                        temp = "0000";
-                    s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
+                    if (rE.num.equals(Main.zero))
+                        continue;
+                    temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "} + ";
                 }
+                if (temp.equals(""))
+                    temp = "0000";
+                s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
             }
-
-            System.out.println(s);
         }
+
+        System.out.println(s);
     }
 }

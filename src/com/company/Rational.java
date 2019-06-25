@@ -5,7 +5,7 @@ import java.math.RoundingMode;
 
 class Rational
 {
-    int p = 0, q = 1;
+    long p = 0, q = 1;
 
     Rational copy()
     {
@@ -14,10 +14,37 @@ class Rational
 
     Rational(){}
 
-    Rational(int a, int b)
+    Rational(long a, long b)
     {
         p = a;
         q = b;
+    }
+
+    static Rational pow(Rational base, int pow)
+    {
+        if (pow == 1)
+            return base.copy();
+        if (pow == 2)
+        {
+            Rational out = base.copy();
+            out.multiply(base);
+            return out;
+        }
+
+        Rational out = pow(base, pow / 2);
+        out.multiply(out);
+
+        if (pow % 2 == 1)
+            out.multiply(base);
+
+        return out;
+    }
+
+    void simplify()
+    {
+        long gcd = gcd(p, q);
+        p /= gcd;
+        q /= gcd;
     }
 
     double value()
@@ -32,7 +59,7 @@ class Rational
 
     void multiply(Rational other)
     {
-        int gcd = gcd(other.p, other.q);
+        long gcd = gcd(other.p, other.q);
         p *= other.p / gcd;
         q *= other.q / gcd;
     }
@@ -41,7 +68,7 @@ class Rational
     {
         p = (p * other.q) + (other.p * q);
         q *= other.q;
-        int gcd = gcd(p, q);
+        long gcd = gcd(p, q);
         p /= gcd;
         q /= gcd;
     }
@@ -57,7 +84,7 @@ class Rational
     @Override
     public int hashCode()
     {
-        return p * q;
+        return (int) (p * q);
     }
 
     @Override
@@ -66,17 +93,13 @@ class Rational
         return p == ((Rational) obj).p && q == ((Rational) obj).q;
     }
 
-    static int depth = 0, c, d;
 
-    static int gcd(int a, int b)
+    static long gcd(long a, long b)
     {
-        depth = 0;
-        c = a;
-        d = b;
         return help(Math.abs(a), Math.abs(b));
     }
 
-    static int help(int a, int b)
+    static long help(long a, long b)
     {
         while (true)
         {

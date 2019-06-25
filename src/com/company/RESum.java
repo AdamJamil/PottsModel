@@ -11,7 +11,7 @@ class RESum
     RESum copy()
     {
         RESum out = new RESum();
-        terms.clear();
+        out.terms.clear();
 
         for (RationalExpression term : terms)
             out.terms.add(term.copy());

@@ -14,14 +14,16 @@ public class Main extends Application
     static RESum sumZero, sumOne;
     static boolean printTM = false;
     static boolean tonyMode = false;
-    static int n = 2;
+    static int n = 10;
     static Driver d;
 
     static boolean drawUpsets = false, drawBadCases = false, drawPartialOrdering = true;
 
     public Main() throws Exception
     {
+        long time = System.nanoTime();
         d = new Driver();
+        System.out.println("total run time: " + ((double) (System.nanoTime() - time)) / 1000000000);
     }
 
     //new thread that runs graphics, called by itself
