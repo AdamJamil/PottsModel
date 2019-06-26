@@ -5,36 +5,11 @@ import java.util.HashSet;
 
 class State implements Comparable<State>
 {
-    HashSet<State> minUpset;
-    String name = "";
+    private String name = "";
     int[] order = new int[3];
-
-    boolean g(State other)
-    {
-        return geq(other) && !equals(other);
-    }
 
     boolean geq(State other)
     {
-//        if (this.equals(other))
-//            return true;
-//
-//        if (this.order[0] > other.order[0] && this.order[2] == other.order[2])
-//            return true;
-//
-//        return this.order[0] == other.order[0] && this.order[2] > other.order[2];
-
-//        if (blacklist.get(this).contains(other))
-//            return false;
-
-//        if (this.equals(other))
-//            return true;
-//
-//        if (this.order[0] != other.order[0])
-//            return false;
-//
-//        return this.order[2] >= other.order[2];
-
         if (this.equals(other))
             return true;
 
@@ -42,14 +17,6 @@ class State implements Comparable<State>
             return false;
 
         return (this.order[0] + this.order[2] >= other.order[0] + other.order[2]);
-
-//        if (this.equals(other))
-//            return true;
-//
-//        if (this.order[0] < other.order[0] || this.order[1] > other.order[1] || this.order[2] > other.order[2])
-//            return false;
-//
-//        return (this.order[0] - other.order[0]) >= (other.order[2] - this.order[2] + other.order[1] - this.order[1]);
     }
 
     @Override

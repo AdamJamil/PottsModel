@@ -1,87 +1,14 @@
 package com.company;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-
-import static com.company.Driver.arrows;
 import static com.company.Driver.states;
 
 class TransitionMatrix
 {
     //map.get(s1).get(s2) -> gives P(s1 -> s2)
-    HashMap<State, HashMap<State, RESum>> map, map2;
+    HashMap<State, HashMap<State, RESum>> map;
     RESum[][] arr;
-
-    void findCoupling()
-    {
-        for (State s1 : states)
-            for (State s2 : states)
-                if (s1.g(s2))
-                {
-                    //System.out.println("s1 = " + s1 + ", s2 = " + s2);
-                    PartialSolution.s1 = s1.toString();
-                    PartialSolution.s2 = s2.toString();
-
-                    ArrayList<Arrow> availableArrows = new ArrayList<>();
-
-                    PartialSolution ps = new PartialSolution();
-                    PartialSolution.allowedArrows1 = new ArrayList<>();
-                    PartialSolution.allowedArrows2 = new HashMap<>();
-                    PartialSolution.prob1 = new HashMap<>();
-                    PartialSolution.prob2 = new HashMap<>();
-
-                    for (Arrow a : arrows)
-                        if (a.valid(s2))
-                        {
-                            availableArrows.add(a);
-                            PartialSolution.prob2.put(a, map.get(s2).get(a.map(s2)));
-                            ps.residualProb2.put(a, map.get(s2).get(a.map(s2)));
-                        }
-
-                    for (Arrow a1 : arrows)
-                    {
-                        if (!a1.valid(s1) || map.get(s1).get(a1.map(s1)).terms.size() == 0)
-                            continue;
-                        //System.out.print(s1 + "" + a1 + ": ");
-
-                        PartialSolution.prob1.put(a1, map.get(s1).get(a1.map(s1)));
-
-                        ArrayList<Arrow> allowedArrows = new ArrayList<>();
-                        for (Arrow a2 : availableArrows)
-                            if (a1.map(s1).geq(a2.map(s2)))
-                                allowedArrows.add(a2);
-
-                        if (allowedArrows.size() < availableArrows.size())
-                        {
-                            //System.out.print(allowedArrows + "\n");
-                            PartialSolution.allowedArrows1.add(a1);
-                            PartialSolution.allowedArrows2.put(a1, allowedArrows);
-                            ps.conditionalProb.put(a1, new HashMap<>());
-                            for (Arrow allowedArrow : allowedArrows)
-                                ps.conditionalProb.get(a1).put(allowedArrow, new RESum());
-                        }
-                        else;
-                            //System.out.println("unrestricted");
-                    }
-                    System.out.println();
-
-                    PartialSolution answer = ps.solve(0);
-                    answer.print();
-                }
-    }
-
-    BigDecimal[][] evaluatePrecise(BigDecimal lambda)
-    {
-        BigDecimal[][] out = new BigDecimal[states.size()][states.size()];
-
-        for (int i = 0; i < out.length; i++)
-            for (int j = 0; j < out.length; j++)
-                out[i][j] = map.get(states.get(i)).get(states.get(j)).evaluatePrecise(lambda);
-
-        return out;
-    }
 
     double[][] evaluate(double lambda)
     {
@@ -92,35 +19,6 @@ class TransitionMatrix
                 out[i][j] += map.get(states.get(i)).get(states.get(j)).evaluate(lambda);
 
         return out;
-    }
-
-    void initializeTwoStep()
-    {
-        map2 = new HashMap<>();
-
-        for (State s1 : states)
-        {
-            map2.put(s1, new HashMap<>());
-            for (State s2 : states)
-                map2.get(s1).put(s2, new RESum());
-            for (Arrow a1 : arrows)
-                for (Arrow a2 : arrows)
-                {
-                    if (!a1.valid(s1) || !a2.valid(a1.map(s1)))
-                        continue;
-                    State s2 = a1.map(s1), s3 = a2.map(s2);
-                    RESum temp = map.get(s1).get(s2).copy();
-                    temp.multiply(map.get(s2).get(s3));
-                    map2.get(s1).get(s3).add(temp);
-                }
-        }
-
-        for (State s1 : states)
-        {
-            RESum total = new RESum();
-            for (State s2 : states)
-                total.add(map2.get(s1).get(s2));
-        }
     }
 
     TransitionMatrix()
@@ -202,36 +100,47 @@ class TransitionMatrix
             }
         }
 
-        //printBS(states);
-
         if (Main.printTM)
             print();
     }
 
-    void print()
+    private void print()
     {
-        String s = " ";
+        StringBuilder sb = new StringBuilder();
+
         for (State state : states)
-            s += " & " + state.toString().replace("†", "\\dagger");
+        {
+            sb.append(" & ");
+            sb.append(state.toString().replace("†", "\\dagger"));
+        }
 
         for (State s1 : states)
         {
-            s += " \\\\ \n" + s1.toString().replace("†", "\\dagger") + " & ";
+            sb.append(" \\\\ \n");
+            sb.append(s1.toString().replace("†", "\\dagger"));
+            sb.append(" & ");
+
             for (State s2 : states)
             {
-                String temp = "";
+                StringBuilder temp = new StringBuilder();
                 for (RationalExpression rE : map.get(s1).get(s2).terms)
                 {
                     if (rE.num.equals(Main.zero))
                         continue;
-                    temp += "\\frac{" + rE.num.LaTeX() + "}{" + rE.denom.LaTeX() + "} + ";
+                    temp.append("\\frac{");
+                    temp.append(rE.num.LaTeX());
+                    temp.append("}{");
+                    temp.append(rE.denom.LaTeX());
+                    temp.append("} + ");
                 }
-                if (temp.equals(""))
-                    temp = "0000";
-                s += temp.substring(0, Math.max(0, temp.length() - 3)) + " & ";
+                if (temp.toString().isEmpty())
+                    temp.append("0000");
+                String ee = temp.toString().substring(0, Math.max(0, temp.toString().length() - 3));
+                sb.append(ee);
+                sb.append(" & ");
             }
         }
 
-        System.out.println(s);
+        System.out.println(sb.toString());
     }
 }

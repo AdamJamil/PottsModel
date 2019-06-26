@@ -2,8 +2,8 @@ package com.company;
 
 class Arrow
 {
-    String name;
-    int[] diff;
+    private String name;
+    private int[] diff;
 
     State map(State s)
     {

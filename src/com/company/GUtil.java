@@ -20,9 +20,8 @@ class GUtil
     private static double dist = 50;
     static double width = 800, height = yOff + dist * (n + 2);
     private static int caseIndex = 0, upsetIndex = 0, partialOrderIndex = 0;
-    private static double dL = 0.01;
-    Driver d;
-    TransitionMatrix tm;
+    private Driver d;
+    private TransitionMatrix tm;
 
     GUtil(Driver d, GraphicsContext gc, Scene scene)
     {
@@ -83,16 +82,19 @@ class GUtil
                     partialOrderIndex %= d.partialOrders.size();
                 }
             }
-            else if (e.getCode().equals(KeyCode.Z))
+            else if (e.getCode().equals(KeyCode.E))
             {
-                gc.setTransform(1.1, 0, 0, 1.1, 0, 0);
+                if (Main.drawPartialOrdering)
+                {
+                    partialOrderIndex = d.partialOrders.size() - 1;
+                }
             }
         });
 
         timeline.play();
     }
 
-    void drawPartialOrdering(GraphicsContext gc)
+    private void drawPartialOrdering(GraphicsContext gc)
     {
         boolean[][] partialOrder = d.partialOrders.get(partialOrderIndex), minUpset = new boolean[partialOrder.length][partialOrder.length];
 
@@ -133,85 +135,37 @@ class GUtil
                 if (set[j])
                 {
                     if (tm.arr[i][j] != null)
+                    {
                         gc.setStroke(Color.BLACK);
+                        drawArrow(gc, xPos(Driver.states.get(j)), yPos(Driver.states.get(j)),
+                                xPos(Driver.states.get(i)), yPos(Driver.states.get(i)));
+                    }
                     else
+                    {
                         gc.setStroke(Color.BLUE);
-                    drawArrow(gc, xPos(Driver.states.get(j)), yPos(Driver.states.get(j)),
-                            xPos(Driver.states.get(i)), yPos(Driver.states.get(i)));
+                        drawArrow(gc, xPos(Driver.states.get(j)), yPos(Driver.states.get(j)),
+                                13 + (xPos(Driver.states.get(i)) + xPos(Driver.states.get(j))) / 2,
+                                -13 + (yPos(Driver.states.get(i)) + yPos(Driver.states.get(j))) / 2);
+
+                        drawArrow(gc, 13 + (xPos(Driver.states.get(i)) + xPos(Driver.states.get(j))) / 2,
+                                -13 + (yPos(Driver.states.get(i)) + yPos(Driver.states.get(j))) / 2,
+                                xPos(Driver.states.get(i)), yPos(Driver.states.get(i)));
+                    }
                 }
         }
-
-//        for (int i = 1; i < n + 1; i++)
-//        {
-//            int rowStates = (i + 1) / 2;
-//
-//            for (int j = 0; j < rowStates - 1; j++)
-//            {
-//                State s1 = new State(new int[]{n - i + 1, n - (n - i + 1 + j), j});
-//                int idx1 = Driver.states.indexOf(s1);
-//                State down = Driver.arrows.get(3).map(s1);
-//                State right = Driver.arrows.get(1).map(s1);
-//                State downRight = Driver.arrows.get(2).map(s1);
-//                int idxDown = Driver.states.indexOf(down);
-//                int idxRight = Driver.states.indexOf(right);
-//                int idxDownRight = Driver.states.indexOf(downRight);
-//
-//                if (partialOrder[idx1][idxDown])
-//                    drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
-//                            xOff + dist * j + xShift, yOff + dist * i + yShift);
-//
-//                if (partialOrder[idxRight][idx1])
-//                    drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * (i - 1) + yShift,
-//                            xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift);
-//
-//                if (partialOrder[idx1][idxDownRight])
-//                    drawArrow(gc, xOff + dist * j + xShift, yOff + dist * (i - 1) + yShift,
-//                            xOff + dist * (j + 1) + xShift, yOff + dist * i + yShift);
-//            }
-//
-//            State rowEnd = new State(new int[]{n - i + 1, n - (n - i + 1 + (rowStates - 1)), (rowStates - 1)});
-//            State down = Driver.arrows.get(3).map(rowEnd);
-//            int idx1 = Driver.states.indexOf(rowEnd);
-//            int idxDown = Driver.states.indexOf(down);
-//
-//            if (partialOrder[idx1][idxDown])
-//                drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
-//                        xOff + dist * (rowStates - 1) + xShift, yOff + dist * i + yShift);
-//
-//            if (i % 2 == 0)
-//            {
-//                State downRight = Driver.arrows.get(2).map(rowEnd);
-//                int idxDownRight = Driver.states.indexOf(downRight);
-//                if (partialOrder[idx1][idxDownRight])
-//                    drawArrow(gc, xOff + dist * (rowStates - 1) + xShift, yOff + dist * (i - 1) + yShift,
-//                            xOff + dist * ((rowStates - 1) + 1) + xShift, yOff + dist * i + yShift);
-//            }
-//        }
-//
-//        int rowStates = (n + 2) / 2;
-//        for (int j = 0; j < rowStates - 1; j++)
-//        {
-//            State s1 = new State(new int[]{0, n - j, j});
-//            State right = Driver.arrows.get(1).map(s1);
-//            int idx1 = Driver.states.indexOf(s1);
-//            int idxRight = Driver.states.indexOf(right);
-//            if (partialOrder[idxRight][idx1])
-//                drawArrow(gc,xOff + dist * (j + 1) + xShift, yOff + dist * n + yShift,
-//                        xOff + dist * j + xShift, yOff + dist * n + yShift);
-//        }
     }
 
-    double yPos(State s)
+    private double yPos(State s)
     {
         return yOff + dist * (n - s.order[0]) + yShift;
     }
 
-    double xPos(State s)
+    private double xPos(State s)
     {
         return xOff + dist * s.order[2] + xShift;
     }
 
-    void drawArrow(GraphicsContext gc, double x1, double y1, double x2, double y2)
+    private void drawArrow(GraphicsContext gc, double x1, double y1, double x2, double y2)
     {
         x1 += 5;
         x2 += 5;
@@ -232,7 +186,7 @@ class GUtil
         gc.strokeLine(cx + dx * cos + dy * sin, cy - dx * sin + dy * cos, cx, cy);
     }
 
-    void drawDiagram(GraphicsContext gc)
+    private void drawDiagram(GraphicsContext gc)
     {
         gc.setStroke(Color.BLACK);
 
@@ -245,10 +199,9 @@ class GUtil
         }
     }
 
-    void drawCase(GraphicsContext gc)
+    private void drawCase(GraphicsContext gc)
     {
         gc.strokeText("s₁ = " + d.bs1.get(caseIndex) + " s₂ = " + d.bs2.get(caseIndex), 40, 40);
-        gc.strokeText("U generated by: " + d.generators.get(d.bu.get(caseIndex)), 40, 70);
 
         for (int i = 0; i < d.bu.get(caseIndex).length; i++)
         {
@@ -283,20 +236,20 @@ class GUtil
         gc.strokeText("s₂", c2x - 6, c2y + 20);
     }
 
-    void drawUpset(GraphicsContext gc)
+    private void drawUpset(GraphicsContext gc)
     {
-        for (int i = 0; i < d.upsets.get(0).length; i++)
+        for (int i = 0; i < d.upsets.get(upsetIndex).length; i++)
         {
-            State uState = Driver.states.get(0);
-            int stateI = n - uState.order[0] + 1;
-            int stateJ = uState.order[2];
-
-            gc.setFill(Color.RED);
-            gc.fillOval(xPos(uState), yPos(uState), 10, 10);
+            if (d.upsets.get(upsetIndex)[i])
+            {
+                State uState = Driver.states.get(i);
+                gc.setFill(Color.RED);
+                gc.fillOval(xPos(uState), yPos(uState), 10, 10);
+            }
         }
     }
 
-    void drawProbs(GraphicsContext gc)
+    private void drawProbs(GraphicsContext gc)
     {
         gc.strokeText("P(s₁ → U) = ", xOff + 100, yOff + 8);
         gc.setStroke(Color.RED);
@@ -307,8 +260,10 @@ class GUtil
         gc.strokeText(d.p2.get(caseIndex).toString(), new Text("P(s₂ → U) = ").getLayoutBounds().getWidth() + xOff + 100, yOff + dist + 8);
     }
 
-    void drawGraph(GraphicsContext gc)
+    private void drawGraph(GraphicsContext gc)
     {
+        double dL = 0.01;
+
         gc.setStroke(Color.BLACK);
         gc.strokeLine(300, 200, 300, 400);
         gc.strokeLine(225, 300, 487.5, 300);
@@ -350,12 +305,12 @@ class GUtil
         }
     }
 
-    double convertX(double in)
+    private double convertX(double in)
     {
         return 37.5 * in + 300;
     }
 
-    double convertY(double in)
+    private double convertY(double in)
     {
         //10px is 1
         return -50 * in + 300;

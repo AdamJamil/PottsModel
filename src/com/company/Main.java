@@ -8,21 +8,23 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.text.DecimalFormat;
+
 public class Main extends Application
 {
     static Polynomial zero, one, x;
     static RESum sumZero, sumOne;
     static boolean printTM = false;
-    static int n = 9;
-    static Driver d;
+    static int n = 8, k = 1;
+    private static Driver d;
 
     static boolean drawUpsets = false, drawBadCases = false, drawPartialOrdering = true;
 
-    public Main() throws Exception
+    public Main()
     {
         long time = System.nanoTime();
         d = new Driver();
-        System.out.println("total run time: " + ((double) (System.nanoTime() - time)) / 1000000000);
+        System.out.println("total run time: " + new DecimalFormat("#.000").format(((double) (System.nanoTime() - time)) / 1000000000) + "s");
     }
 
     //new thread that runs graphics, called by itself
