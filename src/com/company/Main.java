@@ -15,7 +15,7 @@ public class Main extends Application
     static Polynomial zero, one, x;
     static RESum sumZero, sumOne;
     static boolean printTM = false;
-    static int n = 8, k = 1;
+    static int n = 7;
     private static Driver d;
 
     static boolean drawUpsets = false, drawBadCases = false, drawPartialOrdering = true;

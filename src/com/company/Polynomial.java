@@ -5,8 +5,7 @@ import java.util.ArrayList;
 class Polynomial
 {
     ArrayList<Rational> coefficients = new ArrayList<>();
-    private static final double err = 0.0000000001;
-    static ArrayList<Polynomial> pow;
+    private static final double err = 0.000000001;
 
     boolean geqZero()
     {
